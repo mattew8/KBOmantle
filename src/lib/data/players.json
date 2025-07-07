@@ -1,0 +1,302 @@
+[
+  {
+    "id": 1,
+    "name": "김하성",
+    "team": "키움",
+    "position": "유격수",
+    "age": 28,
+    "type": "batter",
+    "stats": {
+      "avg": 0.306,
+      "hr": 15,
+      "rbi": 67,
+      "sb": 22,
+      "ops": 0.823
+    }
+  },
+  {
+    "id": 2,
+    "name": "박병호",
+    "team": "LG",
+    "position": "1루수",
+    "age": 37,
+    "type": "batter",
+    "stats": {
+      "avg": 0.277,
+      "hr": 33,
+      "rbi": 95,
+      "sb": 2,
+      "ops": 0.925
+    }
+  },
+  {
+    "id": 3,
+    "name": "최정",
+    "team": "SSG",
+    "position": "3루수",
+    "age": 32,
+    "type": "batter",
+    "stats": {
+      "avg": 0.294,
+      "hr": 28,
+      "rbi": 102,
+      "sb": 8,
+      "ops": 0.891
+    }
+  },
+  {
+    "id": 4,
+    "name": "양현종",
+    "team": "KIA",
+    "position": "투수",
+    "age": 36,
+    "type": "pitcher",
+    "stats": {
+      "era": 3.45,
+      "wins": 15,
+      "strikeouts": 178,
+      "innings": 195.1,
+      "whip": 1.21
+    }
+  },
+  {
+    "id": 5,
+    "name": "박세웅",
+    "team": "롯데",
+    "position": "투수",
+    "age": 35,
+    "type": "pitcher",
+    "stats": {
+      "era": 2.95,
+      "wins": 12,
+      "strikeouts": 156,
+      "innings": 173.2,
+      "whip": 1.15
+    }
+  },
+  {
+    "id": 6,
+    "name": "김광현",
+    "team": "SSG",
+    "position": "투수",
+    "age": 35,
+    "type": "pitcher",
+    "stats": {
+      "era": 3.98,
+      "wins": 8,
+      "strikeouts": 132,
+      "innings": 142.1,
+      "whip": 1.34
+    }
+  },
+  {
+    "id": 7,
+    "name": "오지환",
+    "team": "LG",
+    "position": "2루수",
+    "age": 33,
+    "type": "batter",
+    "stats": {
+      "avg": 0.285,
+      "hr": 24,
+      "rbi": 89,
+      "sb": 18,
+      "ops": 0.845
+    }
+  },
+  {
+    "id": 8,
+    "name": "이정후",
+    "team": "키움",
+    "position": "좌익수",
+    "age": 25,
+    "type": "batter",
+    "stats": {
+      "avg": 0.349,
+      "hr": 23,
+      "rbi": 113,
+      "sb": 25,
+      "ops": 1.015
+    }
+  },
+  {
+    "id": 9,
+    "name": "류현진",
+    "team": "한화",
+    "position": "투수",
+    "age": 36,
+    "type": "pitcher",
+    "stats": {
+      "era": 3.27,
+      "wins": 14,
+      "strikeouts": 145,
+      "innings": 192.0,
+      "whip": 1.08
+    }
+  },
+  {
+    "id": 10,
+    "name": "소크라테스",
+    "team": "두산",
+    "position": "좌익수",
+    "age": 34,
+    "type": "batter",
+    "stats": {
+      "avg": 0.304,
+      "hr": 21,
+      "rbi": 75,
+      "sb": 12,
+      "ops": 0.892
+    }
+  },
+  {
+    "id": 11,
+    "name": "터커",
+    "team": "KIA",
+    "position": "우익수",
+    "age": 29,
+    "type": "batter",
+    "stats": {
+      "avg": 0.342,
+      "hr": 31,
+      "rbi": 112,
+      "sb": 4,
+      "ops": 1.028
+    }
+  },
+  {
+    "id": 12,
+    "name": "원태인",
+    "team": "삼성",
+    "position": "투수",
+    "age": 25,
+    "type": "pitcher",
+    "stats": {
+      "era": 4.12,
+      "wins": 10,
+      "strikeouts": 98,
+      "innings": 131.1,
+      "whip": 1.42
+    }
+  },
+  {
+    "id": 13,
+    "name": "나성범",
+    "team": "KIA",
+    "position": "좌익수",
+    "age": 31,
+    "type": "batter",
+    "stats": {
+      "avg": 0.329,
+      "hr": 26,
+      "rbi": 88,
+      "sb": 15,
+      "ops": 0.943
+    }
+  },
+  {
+    "id": 14,
+    "name": "문동주",
+    "team": "한화",
+    "position": "투수",
+    "age": 27,
+    "type": "pitcher",
+    "stats": {
+      "era": 3.78,
+      "wins": 11,
+      "strikeouts": 167,
+      "innings": 171.0,
+      "whip": 1.28
+    }
+  },
+  {
+    "id": 15,
+    "name": "구자욱",
+    "team": "삼성",
+    "position": "우익수",
+    "age": 30,
+    "type": "batter",
+    "stats": {
+      "avg": 0.312,
+      "hr": 19,
+      "rbi": 71,
+      "sb": 11,
+      "ops": 0.867
+    }
+  },
+  {
+    "id": 16,
+    "name": "페레즈",
+    "team": "LG",
+    "position": "투수",
+    "age": 33,
+    "type": "pitcher",
+    "stats": {
+      "era": 2.88,
+      "wins": 13,
+      "strikeouts": 189,
+      "innings": 187.2,
+      "whip": 1.03
+    }
+  },
+  {
+    "id": 17,
+    "name": "홍창기",
+    "team": "LG",
+    "position": "좌익수",
+    "age": 29,
+    "type": "batter",
+    "stats": {
+      "avg": 0.301,
+      "hr": 17,
+      "rbi": 63,
+      "sb": 28,
+      "ops": 0.812
+    }
+  },
+  {
+    "id": 18,
+    "name": "이의리",
+    "team": "KT",
+    "position": "투수",
+    "age": 28,
+    "type": "pitcher",
+    "stats": {
+      "era": 3.56,
+      "wins": 9,
+      "strikeouts": 134,
+      "innings": 158.1,
+      "whip": 1.31
+    }
+  },
+  {
+    "id": 19,
+    "name": "김선빈",
+    "team": "키움",
+    "position": "2루수",
+    "age": 27,
+    "type": "batter",
+    "stats": {
+      "avg": 0.288,
+      "hr": 12,
+      "rbi": 54,
+      "sb": 31,
+      "ops": 0.751
+    }
+  },
+  {
+    "id": 20,
+    "name": "노시환",
+    "team": "한화",
+    "position": "3루수",
+    "age": 24,
+    "type": "batter",
+    "stats": {
+      "avg": 0.267,
+      "hr": 35,
+      "rbi": 109,
+      "sb": 6,
+      "ops": 0.896
+    }
+  }
+]
