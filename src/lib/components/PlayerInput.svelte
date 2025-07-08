@@ -13,30 +13,65 @@
   let suggestions = $state<Player[]>([]);
   let selectedIndex = $state(-1);
   let inputElement: HTMLInputElement;
+  let showDropdown = $state(true);
+  let lastInput = $state('');
 
   $effect(() => {
-    if ($currentInput.length > 0) {
-      suggestions = searchPlayers($currentInput)
+    if ($currentInput.length > 0 && showDropdown) {
+      const newSuggestions = searchPlayers($currentInput)
         .filter(p => !$hasGuessedPlayer(p.id))
         .slice(0, 5);
-      selectedIndex = -1;
+      
+      // 새로운 검색 결과가 나왔을 때만 selectedIndex 리셋
+      if (JSON.stringify(suggestions) !== JSON.stringify(newSuggestions)) {
+        suggestions = newSuggestions;
+        selectedIndex = -1;
+      }
     } else {
       suggestions = [];
       selectedIndex = -1;
     }
   });
 
+  // input 값이 실제로 변경될 때만 드롭다운 보여주기
+  $effect(() => {
+    if ($currentInput !== lastInput) {
+      showDropdown = true;
+      lastInput = $currentInput;
+    }
+  });
+
   function selectPlayer(player: Player) {
-    onguess?.(player);
-    currentInput.set('');
+    showDropdown = false;
+    currentInput.set(player.name);
+    lastInput = player.name;
     suggestions = [];
     selectedIndex = -1;
+  }
+
+  function handleGuess() {
+    if (!$currentInput.trim()) return;
+    
+    const exactMatch = $availablePlayers.find(p =>
+      p.name.toLowerCase() === $currentInput.trim().toLowerCase()
+    );
+    
+    if (exactMatch && !$hasGuessedPlayer(exactMatch.id)) {
+      onguess?.(exactMatch);
+      currentInput.set('');
+      suggestions = [];
+      selectedIndex = -1;
+    }
   }
 
   function handleKeydown(event: KeyboardEvent) {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
-      selectedIndex = Math.min(selectedIndex + 1, suggestions.length - 1);
+      if (selectedIndex === -1) {
+        selectedIndex = 0;
+      } else {
+        selectedIndex = Math.min(selectedIndex + 1, suggestions.length - 1);
+      }
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
       selectedIndex = Math.max(selectedIndex - 1, -1);
@@ -44,14 +79,13 @@
       event.preventDefault();
       if (selectedIndex >= 0 && suggestions[selectedIndex]) {
         selectPlayer(suggestions[selectedIndex]);
-      } else if ($currentInput.trim()) {
-        const exactMatch = $availablePlayers.find(p =>
-          p.name.toLowerCase() === $currentInput.trim().toLowerCase()
-        );
-        if (exactMatch && !$hasGuessedPlayer(exactMatch.id)) {
-          selectPlayer(exactMatch);
-        }
       }
+      // 드롭다운이 있지만 선택된 항목이 없을 때는 드롭다운 닫기
+      else if (suggestions.length > 0) {
+        suggestions = [];
+        selectedIndex = -1;
+      }
+      // 엔터로는 추측하기 실행하지 않음 - 오직 버튼 클릭으로만 가능
     } else if (event.key === 'Escape') {
       suggestions = [];
       selectedIndex = -1;
@@ -67,17 +101,26 @@
 </script>
 
 <div class="relative mx-auto w-full max-w-lg">
-  <input
-    bind:this={inputElement}
-    bind:value={$currentInput}
-    onkeydown={handleKeydown}
-    onblur={handleBlur}
-    placeholder="선수 이름을 입력하세요..."
-    class="px-4 py-3 w-full text-base rounded-lg border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-  />
+  <div class="flex gap-2">
+    <input
+      bind:this={inputElement}
+      bind:value={$currentInput}
+      onkeydown={handleKeydown}
+      onblur={handleBlur}
+      placeholder="선수 이름을 입력하세요..."
+      class="px-4 py-3 flex-1 text-base rounded-lg border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+    />
+    <button
+      onclick={handleGuess}
+      disabled={!$currentInput.trim()}
+      class="px-6 py-3 text-base font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+    >
+      추측하기
+    </button>
+  </div>
 
   {#if suggestions.length > 0}
-    <div class="absolute right-0 left-0 top-full z-10 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg">
+    <div class="absolute left-0 top-full z-10 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg" style="right: 100px;">
       {#each suggestions as player, index}
         <button
           onclick={() => selectPlayer(player)}
