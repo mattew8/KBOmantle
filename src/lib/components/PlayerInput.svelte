@@ -86,6 +86,7 @@
           <div class="text-sm font-medium text-gray-900">{player.name}</div>
           <div class="flex gap-2 items-center mt-1 text-xs text-gray-600">
             <span class="px-2 py-1 text-xs text-gray-700 bg-gray-100 rounded">{player.team}</span>
+            <span>{player.position.replace(/\([^)]*\)/g, '').trim()}</span>
             <span>타율 {player.avg.toFixed(3)}</span>
             <span>{player.home_runs}HR</span>
           </div>
