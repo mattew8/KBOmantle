@@ -16,7 +16,7 @@
 
   $effect(() => {
     if ($currentInput.length > 0) {
-      suggestions = searchPlayers($currentInput, $availablePlayers[0]?.type)
+      suggestions = searchPlayers($currentInput)
         .filter(p => !$hasGuessedPlayer(p.id))
         .slice(0, 5);
       selectedIndex = -1;
@@ -66,28 +66,28 @@
   }
 </script>
 
-<div class="relative w-full max-w-md mx-auto">
+<div class="relative mx-auto w-full max-w-lg">
   <input
     bind:this={inputElement}
     bind:value={$currentInput}
-    on:keydown={handleKeydown}
-    on:blur={handleBlur}
+    onkeydown={handleKeydown}
+    onblur={handleBlur}
     placeholder="선수 이름을 입력하세요..."
-    class="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+    class="px-4 py-3 w-full text-base rounded-lg border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
   />
 
   {#if suggestions.length > 0}
-    <div class="absolute top-full left-0 right-0 bg-white border-2 border-gray-200 rounded-lg shadow-lg z-10 mt-1">
+    <div class="absolute right-0 left-0 top-full z-10 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg">
       {#each suggestions as player, index}
         <button
-          on:click={() => selectPlayer(player)}
-          class="w-full px-4 py-3 text-left hover:bg-gray-100 border-b border-gray-100 last:border-b-0 {selectedIndex === index ? 'bg-blue-50' : ''}"
+          onclick={() => selectPlayer(player)}
+          class="w-full px-4 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 {selectedIndex === index ? 'bg-blue-50' : ''}"
         >
-          <div class="font-semibold text-gray-900">{player.name}</div>
-          <div class="text-sm text-gray-600 flex items-center gap-2">
-            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">{player.team}</span>
-            <span>{player.position}</span>
-            <span>{player.age}세</span>
+          <div class="text-sm font-medium text-gray-900">{player.name}</div>
+          <div class="flex gap-2 items-center mt-1 text-xs text-gray-600">
+            <span class="px-2 py-1 text-xs text-gray-700 bg-gray-100 rounded">{player.team}</span>
+            <span>타율 {player.avg.toFixed(3)}</span>
+            <span>{player.home_runs}HR</span>
           </div>
         </button>
       {/each}

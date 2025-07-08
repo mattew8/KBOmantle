@@ -24,14 +24,14 @@
   }
 </script>
 
-<div class="flex items-center gap-3">
-  <div class="flex-1 bg-gray-200 rounded-full h-6 overflow-hidden">
+<div class="flex gap-3 items-center">
+  <div class="overflow-hidden flex-1 h-6 bg-gray-200 rounded-full">
     <div
       class="h-full {getColor(similarity)} transition-all duration-500 ease-out flex items-center justify-end pr-2"
       style="width: {similarity}%"
     >
       {#if similarity > 20}
-        <span class="text-white text-sm font-semibold">
+        <span class="text-sm font-semibold text-white">
           {similarity.toFixed(1)}%
         </span>
       {/if}
