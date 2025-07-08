@@ -6,42 +6,30 @@ import playersData from '../data/players.json';
 export const allPlayers = writable<Player[]>(playersData as Player[]);
 
 export const availablePlayers = derived(
-  [allPlayers, targetPlayer],
-  ([$allPlayers, $targetPlayer]) => {
-    if (!$targetPlayer) return [];
-    return $allPlayers.filter((p) => p.type === $targetPlayer.type);
+  [allPlayers],
+  ([$allPlayers]) => {
+    return $allPlayers;
   }
 );
 
-export const batters = derived(allPlayers, ($allPlayers) =>
-  $allPlayers.filter(p => p.type === 'batter')
-);
-
-export const pitchers = derived(allPlayers, ($allPlayers) =>
-  $allPlayers.filter(p => p.type === 'pitcher')
-);
-
-export function getRandomPlayer(type?: 'batter' | 'pitcher'): Player {
+export function getRandomPlayer(): Player {
   const players = playersData as Player[];
-  const filtered = type ? players.filter(p => p.type === type) : players;
-  return filtered[Math.floor(Math.random() * filtered.length)];
+  return players[Math.floor(Math.random() * players.length)];
 }
 
-export function getPlayerById(id: number): Player | undefined {
+export function getPlayerById(id: string): Player | undefined {
   const players = playersData as Player[];
   return players.find(p => p.id === id);
 }
 
-export function searchPlayers(query: string, type?: 'batter' | 'pitcher'): Player[] {
+export function searchPlayers(query: string): Player[] {
   const players = playersData as Player[];
-  const filtered = type ? players.filter(p => p.type === type) : players;
   
   if (!query.trim()) return [];
   
   const searchTerm = query.toLowerCase();
-  return filtered.filter(p =>
+  return players.filter(p =>
     p.name.toLowerCase().includes(searchTerm) ||
-    p.team.toLowerCase().includes(searchTerm) ||
-    p.position.toLowerCase().includes(searchTerm)
+    p.team.toLowerCase().includes(searchTerm)
   );
 }

@@ -1,5 +1,5 @@
-import { writable, derived } from 'svelte/store';
-import type { Player } from '../utils/vector.js';
+import { writable, derived } from "svelte/store";
+import type { Player } from "../utils/vector.js";
 
 export interface Guess {
   player: Player;
@@ -9,7 +9,7 @@ export interface Guess {
 
 export const targetPlayer = writable<Player | null>(null);
 export const guesses = writable<Guess[]>([]);
-export const currentInput = writable<string>('');
+export const currentInput = writable<string>("");
 export const gameWon = writable<boolean>(false);
 export const gameStarted = writable<boolean>(false);
 
@@ -24,19 +24,19 @@ export const bestSimilarity = derived(guesses, ($guesses) =>
 );
 
 export const hasGuessedPlayer = derived(guesses, ($guesses) => {
-  return (playerId: number) => $guesses.some(g => g.player.id === playerId);
+  return (playerId: string) => $guesses.some((g) => g.player.id === playerId);
 });
 
 export function addGuess(player: Player, similarity: number) {
-  guesses.update(current => [
+  guesses.update((current) => [
     ...current,
     {
       player,
       similarity: Math.round(similarity * 100) / 100,
-      timestamp: Date.now()
-    }
+      timestamp: Date.now(),
+    },
   ]);
-  
+
   if (similarity >= 99.9) {
     gameWon.set(true);
   }
@@ -44,7 +44,7 @@ export function addGuess(player: Player, similarity: number) {
 
 export function resetGame() {
   guesses.set([]);
-  currentInput.set('');
+  currentInput.set("");
   gameWon.set(false);
   gameStarted.set(false);
   targetPlayer.set(null);
