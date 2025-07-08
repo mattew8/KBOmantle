@@ -19,6 +19,17 @@ export interface Player {
   rbis: number;
   sacrifice_bunts: number;
   sacrifice_flies: number;
+  walks: number;
+  intentional_walks: number;
+  hit_by_pitch: number;
+  strikeouts: number;
+  ground_into_double_play: number;
+  slugging_percentage: number;
+  on_base_percentage: number;
+  ops: number;
+  multi_hits: number;
+  risp_avg: number;
+  pinch_hit_avg: number;
   extra_base_hits: number;
   ground_outs: number;
   air_outs: number;
@@ -84,37 +95,49 @@ export function createBatterVector(player: Player): number[] {
   };
   const age = calculateAge(player.birth_date);
 
-  // 매우 차별화된 벡터 구성 - 각 차원을 극단적으로 분리
+  // 순수 스탯 기반 벡터 구성 (팀/포지션은 보너스로 별도 처리)
   return [
-    // 핵심 타격 능력 (큰 가중치)
-    Math.pow(normalize(player.avg, 0.2, 0.35), 2) * 5, // 타율 제곱 (차이 극대화)
-    Math.pow(normalize(player.isolated_power, 0, 0.35), 2) * 4, // ISO 제곱 (파워 차이 극대화)
-    Math.pow(normalize(player.gpa, 0.2, 0.35), 2) * 4, // GPA 제곱 (종합 능력)
+    // 핵심 타격 능력 (높은 가중치)
+    normalize(player.avg, 0.2, 0.35) * 4, // 타율
+    normalize(player.slugging_percentage || 0, 0.3, 0.65) * 4, // 장타율
+    normalize(player.on_base_percentage || 0, 0.3, 0.45) * 4, // 출루율
+    normalize(player.ops || 0, 0.6, 1.1) * 5, // OPS (가장 중요한 지표)
 
-    // 파워 지표 (중간 가중치)
+    // 파워 지표
     normalize(player.home_runs, 0, 30) * 3, // 홈런
+    normalize(player.isolated_power, 0, 0.35) * 3, // ISO
     normalize(player.extra_base_hits, 0, 45) * 2, // 장타수
+    normalize(player.doubles, 0, 30) * 1.5, // 2루타
 
     // 생산성 지표
-    normalize(player.rbis, 0, 100) * 2, // 타점
-    normalize(player.runs, 0, 70) * 2, // 득점
-    normalize(player.game_winning_rbi, 0, 12), // 결승타
+    normalize(player.rbis, 0, 100) * 2.5, // 타점
+    normalize(player.runs, 0, 70) * 2.5, // 득점
+    normalize(player.game_winning_rbi, 0, 12) * 1.5, // 결승타
 
-    // 선구안 및 접촉 능력
-    Math.pow(normalize(player.bb_k_ratio, 0, 2), 1.5) * 3, // 볼넷/삼진 비율 (1.5승)
+    // 선구안 및 컨택 능력
+    normalize(player.walks, 0, 60) * 3, // 볼넷
+    normalize(player.strikeouts, 90, 0) * 2, // 삼진 (역정규화)
+    normalize(player.bb_k_ratio, 0, 2) * 3, // BB/K 비율
     normalize(player.pitches_per_pa, 3, 5) * 2, // 구당 타석수
 
-    // 타구 성향 (차별화 요소)
-    Math.abs(normalize(player.go_ao_ratio, 0.4, 3.5) - 0.5) * 4, // GO/AO 비율 (중간값에서 거리)
+    // 클러치 능력
+    normalize(player.risp_avg || 0, 0.2, 0.5) * 3, // 득점권 타율
+    normalize(player.multi_hits, 0, 40) * 2, // 멀티히트
 
-    // 포지션 (같은 포지션끼리 유사도 높게)
-    normalize(positionCode, 1, 3) * 2, // 포지션 (가중치 2배)
+    // 타구 성향 및 스타일
+    normalize(player.go_ao_ratio, 0.4, 3.5) * 2, // GO/AO 비율
+    normalize(player.ground_into_double_play, 10, 0) * 1.5, // 병살타 (역정규화)
 
-    // 나이 (비슷한 연령대끼리 유사도 높게)
-    normalize(age, 20, 45) * 1.5, // 나이 (가중치 1.5배)
+    // 출장 및 활용도
+    normalize(player.games, 50, 90) * 1.5, // 출장경기수
+    normalize(player.plate_appearances, 200, 400) * 1.5, // 타석수
 
-    // 팀 (작은 가중치)
-    normalize(teamCode, 1, 10) * 0.3, // 팀
+    // 고급 지표
+    normalize(player.gpa, 0.2, 0.35) * 3, // GPA
+    normalize(player.extra_runs, 20, 70) * 2, // Extra Runs
+
+    // 나이 (팀/포지션은 보너스로 별도 처리)
+    normalize(age, 20, 45) * 1.5, // 나이
   ];
 }
 
