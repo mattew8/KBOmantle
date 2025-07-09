@@ -1,4 +1,5 @@
 import type { Player } from './vector';
+import { CONFIG } from '../config.js';
 
 /**
  * 문자열을 해시코드로 변환하는 함수
@@ -19,7 +20,7 @@ function hashCode(str: string): number {
 export function getTodayDateKST(): string {
   const now = new Date();
   // 한국 시간 (UTC+9)으로 변환
-  const kstTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+  const kstTime = new Date(now.getTime() + (CONFIG.TIMEZONE_OFFSET * 60 * 60 * 1000));
   return kstTime.toISOString().split('T')[0];
 }
 
@@ -61,7 +62,7 @@ export interface DailyGameState {
  */
 export function getTodayGameState(date?: string): DailyGameState | null {
   const targetDate = date || getTodayDateKST();
-  const key = `kbomantle_${targetDate}`;
+  const key = `${CONFIG.STORAGE_PREFIX}${targetDate}`;
   
   try {
     const saved = localStorage.getItem(key);
@@ -86,7 +87,7 @@ export function getTodayGameState(date?: string): DailyGameState | null {
  * 게임 상태를 localStorage에 저장하기
  */
 export function saveTodayGameState(state: DailyGameState): void {
-  const key = `kbomantle_${state.date}`;
+  const key = `${CONFIG.STORAGE_PREFIX}${state.date}`;
   
   try {
     localStorage.setItem(key, JSON.stringify(state));
@@ -153,7 +154,7 @@ export function isGameCompletedToday(date?: string): boolean {
  */
 export function getTimeUntilTomorrow(): { hours: number; minutes: number; seconds: number } {
   const now = new Date();
-  const kstNow = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+  const kstNow = new Date(now.getTime() + (CONFIG.TIMEZONE_OFFSET * 60 * 60 * 1000));
   
   // 한국 시간 기준 내일 00:00:00
   const tomorrow = new Date(kstNow);
@@ -161,7 +162,7 @@ export function getTimeUntilTomorrow(): { hours: number; minutes: number; second
   tomorrow.setHours(0, 0, 0, 0);
   
   // UTC로 변환해서 차이 계산
-  const tomorrowUTC = new Date(tomorrow.getTime() - (9 * 60 * 60 * 1000));
+  const tomorrowUTC = new Date(tomorrow.getTime() - (CONFIG.TIMEZONE_OFFSET * 60 * 60 * 1000));
   const diff = tomorrowUTC.getTime() - now.getTime();
   
   const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -176,14 +177,14 @@ export function getTimeUntilTomorrow(): { hours: number; minutes: number; second
  */
 export function cleanOldGameStates(): void {
   const keys = Object.keys(localStorage);
-  const kbomantleKeys = keys.filter(key => key.startsWith('kbomantle_'));
+  const gameKeys = keys.filter(key => key.startsWith(CONFIG.STORAGE_PREFIX));
   
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const cutoffDate = sevenDaysAgo.toISOString().split('T')[0];
+  const cutoffDaysAgo = new Date();
+  cutoffDaysAgo.setDate(cutoffDaysAgo.getDate() - CONFIG.STORAGE_CLEANUP_DAYS);
+  const cutoffDate = cutoffDaysAgo.toISOString().split('T')[0];
   
-  kbomantleKeys.forEach(key => {
-    const dateStr = key.replace('kbomantle_', '');
+  gameKeys.forEach(key => {
+    const dateStr = key.replace(CONFIG.STORAGE_PREFIX, '');
     if (dateStr < cutoffDate) {
       localStorage.removeItem(key);
     }

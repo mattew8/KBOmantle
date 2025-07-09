@@ -4,6 +4,7 @@
   import { allPlayers } from '../lib/stores/players.js';
   import { calculateVectorSimilarity } from '../lib/utils/similarity.js';
   import { getTodayDateKST } from '../lib/utils/daily.js';
+  import { CONFIG } from '../lib/config.js';
   import PlayerInput from '../lib/components/PlayerInput.svelte';
   import GuessHistory from '../lib/components/GuessHistory.svelte';
   import GameComplete from '../lib/components/GameComplete.svelte';
@@ -48,8 +49,8 @@
 <div class="py-4 min-h-screen bg-gray-50">
   <div class="px-4 mx-auto max-w-2xl">
     <header class="mb-6 text-center">
-      <h1 class="mb-1 text-3xl font-bold text-gray-900">KBOmantle</h1>
-      <p class="text-sm text-gray-600">벡터 기반 KBO 선수 유사도 게임</p>
+      <h1 class="mb-1 text-3xl font-bold text-gray-900">{CONFIG.SITE_NAME}</h1>
+      <p class="text-sm text-gray-600">{CONFIG.SITE_DESCRIPTION}</p>
       
       {#if gameInitialized}
         <div class="mt-3 text-xs text-gray-500">
