@@ -62,16 +62,20 @@
       suggestions = [];
       selectedIndex = -1;
       
-      // 추측 후 input에 다시 포커스
+      // 추측 후 input에 다시 포커스 (모바일에서는 제외)
       setTimeout(() => {
-        inputElement?.focus();
+        if (!isMobile()) {
+          inputElement?.focus();
+        }
       }, 100);
     }
   }
 
   function handleKeydown(event: KeyboardEvent) {
+    console.log('핸들키다운')
     if (event.key === 'ArrowDown') {
       event.preventDefault();
+      console.log(selectedIndex,"셀렉인덱")
       if (selectedIndex === -1) {
         selectedIndex = 0;
       } else {
@@ -103,6 +107,12 @@
       selectedIndex = -1;
     }, 200);
   }
+
+  function isMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+           'ontouchstart' in window || 
+           navigator.maxTouchPoints > 0;
+  }
 </script>
 
 <div class="relative mx-auto w-full max-w-lg">
@@ -118,14 +128,14 @@
       />
       
       {#if suggestions.length > 0}
-        <div class="absolute left-0 top-full z-10 mt-1 w-full bg-white rounded-lg border border-gray-200 shadow-lg max-h-60 overflow-y-auto">
+        <div class="overflow-y-auto absolute left-0 top-full z-10 mt-1 w-full max-h-60 bg-white rounded-lg border border-gray-200 shadow-lg">
           {#each suggestions as player, index}
             <button
               onclick={() => selectPlayer(player)}
               class="w-full px-3 py-2 sm:px-4 sm:py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 {selectedIndex === index ? 'bg-blue-50' : ''} touch-manipulation"
             >
               <div class="text-sm font-medium text-gray-900">{player.name}</div>
-              <div class="flex flex-wrap gap-1 sm:gap-2 items-center mt-1 text-xs text-gray-600">
+              <div class="flex flex-wrap gap-1 items-center mt-1 text-xs text-gray-600 sm:gap-2">
                 <span class="px-2 py-1 text-xs text-gray-700 bg-gray-100 rounded">{player.team}</span>
                 <span class="hidden sm:inline">{player.position.replace(/\([^)]*\)/g, '').trim()}</span>
                 <span class="text-xs sm:text-xs">타율 {player.avg.toFixed(3)}</span>

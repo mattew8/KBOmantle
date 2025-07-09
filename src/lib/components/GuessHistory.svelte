@@ -9,6 +9,7 @@
   let sortKey: SortKey = $state('input');
   let sortDirection: SortDirection = $state('asc');
   let expandedPlayerId: string | null = $state(null);
+  let showDetailedStats: { [key: string]: boolean } = $state({});
 
   // 로컬스토리지에서 정렬 설정 복원
   onMount(() => {
@@ -90,6 +91,11 @@
     } else {
       expandedPlayerId = playerId; // 다른 행 열기
     }
+  }
+
+  // 세부 스탯 토글
+  function toggleDetailedStats(playerId: string) {
+    showDetailedStats[playerId] = !showDetailedStats[playerId];
   }
 
   function getSimilarityTextColor(similarity: number): string {
@@ -240,25 +246,25 @@
 
           <!-- 선수 세부 정보 드롭다운 -->
           {#if expandedPlayerId === guess.player.id}
-            <div class="px-2 sm:px-4 py-4 sm:py-6 bg-gray-50 border-t border-gray-200 animate-slideDown">
+            <div class="px-3 sm:px-4 py-3 sm:py-4 bg-white border-t border-gray-200 animate-slideDown">
               <div class="max-w-2xl">
                 <!-- 선수 헤더 -->
-                <div class="flex gap-3 sm:gap-4 items-center mb-4 sm:mb-6">
+                <div class="flex gap-3 items-center mb-3">
                   <img 
                     src={guess.player.image_url} 
                     alt={guess.player.name}
-                    class="object-cover w-12 h-16 sm:w-16 sm:h-20 rounded-lg border-2 border-white shadow-lg"
+                    class="object-cover w-10 h-12 sm:w-12 sm:h-14 rounded border border-gray-200"
                     onerror={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA2NCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjgwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMiA0MEMzOS43MzIgNDAgNDggMzEuNzMyIDQ4IDI0QzQ4IDEzLjI2OCAzOS43MzIgOCAzMiA4QzI0LjI2OCA4IDE2IDEzLjI2OCAxNiAyNEMxNiAzMS43MzIgMjQuMjY4IDQwIDMyIDQwWiIgZmlsbD0iI0QxRDVEQiIvPgo8cGF0aCBkPSJNMTYgNTZINDhMNDQgNzJIOEwxNiA1NloiIGZpbGw9IiNEMUQ1REIiLz4KPC9zdmc+Cg==';
+                      (e.currentTarget as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNTYiIHZpZXdCb3g9IjAgMCA0OCA1NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjU2IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yNCAyOEMzMC42MjMyIDI4IDM2IDE5LjczMiAzNiAxNEMzNiA4LjI2OCAzMC42MjMyIDQgMjQgNEMxNy4zNzY4IDQgMTIgOC4yNjggMTIgMTRDMTIgMTkuNzMyIDE3LjM3NjggMjggMjQgMjhaIiBmaWxsPSIjRDFENURCIi8+CjxwYXRoIGQ9Ik0xMiAzNkgzNkwzNCA0OEg2TDEyIDM2WiIgZmlsbD0iI0QxRDVEQiIvPgo8L3N2Zz4K';
                     }}
                   />
                   <div class="flex-1 min-w-0">
-                    <h3 class="font-bold text-gray-900 text-base sm:text-lg">{guess.player.name}</h3>
-                    <div class="flex flex-wrap gap-2 items-center mt-1 sm:mt-2">
-                      <span class="px-2 py-1 text-xs sm:text-sm font-medium text-blue-800 bg-blue-100 rounded-full">
+                    <h3 class="font-semibold text-gray-900 text-sm sm:text-base">{guess.player.name}</h3>
+                    <div class="flex flex-wrap gap-1 items-center mt-1">
+                      <span class="px-2 py-0.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md">
                         {guess.player.team}
                       </span>
-                      <span class="px-2 py-1 text-xs sm:text-sm font-medium text-green-800 bg-green-100 rounded-full">
+                      <span class="px-2 py-0.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md">
                         {guess.player.position.replace(/\([^)]*\)/g, '').trim()}
                       </span>
                     </div>
@@ -266,63 +272,81 @@
                 </div>
 
                 <!-- 기본 정보 -->
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
-                  <div class="p-3 sm:p-4 bg-white rounded-lg shadow-sm">
-                    <div class="mb-1 text-xs sm:text-sm text-gray-600">생년월일</div>
-                    <div class="font-semibold text-gray-900 text-xs sm:text-sm">{guess.player.birth_date}</div>
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                  <div class="px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
+                    <div class="text-xs text-gray-500">생년월일</div>
+                    <div class="font-medium text-gray-900 text-sm">{guess.player.birth_date}</div>
                   </div>
-                  <div class="p-3 sm:p-4 bg-white rounded-lg shadow-sm">
-                    <div class="mb-1 text-xs sm:text-sm text-gray-600">순위</div>
-                    <div class="font-semibold text-gray-900 text-xs sm:text-sm">#{guess.player.rank}</div>
+                  <div class="px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
+                    <div class="text-xs text-gray-500">순위</div>
+                    <div class="font-medium text-gray-900 text-sm">#{guess.player.rank}</div>
                   </div>
                 </div>
 
                 <!-- 스탯 정보 -->
-                <div>
-                  <h4 class="flex gap-2 items-center mb-3 sm:mb-4 text-sm font-semibold text-gray-900">
-                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                    주요 스탯
-                  </h4>
+                <div class="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                  {#if guess.player.avg !== undefined}
+                    <div class="px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
+                      <div class="text-xs text-gray-500">타율</div>
+                      <div class="font-semibold text-gray-900 text-sm">{guess.player.avg.toFixed(3)}</div>
+                    </div>
+                  {/if}
                   
-                  <div class="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
-                    {#if guess.player.avg !== undefined}
-                      <div class="p-2 sm:p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
-                        <div class="text-xs sm:text-sm font-medium text-blue-700">타율</div>
-                        <div class="font-bold text-blue-900 text-sm sm:text-base">{guess.player.avg.toFixed(3)}</div>
+                  {#if guess.player.home_runs !== undefined}
+                    <div class="px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
+                      <div class="text-xs text-gray-500">홈런</div>
+                      <div class="font-semibold text-gray-900 text-sm">{guess.player.home_runs}</div>
+                    </div>
+                  {/if}
+                  
+                  {#if guess.player.rbis !== undefined}
+                    <div class="px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
+                      <div class="text-xs text-gray-500">타점</div>
+                      <div class="font-semibold text-gray-900 text-sm">{guess.player.rbis}</div>
+                    </div>
+                  {/if}
+                  
+                  {#if guess.player.ops !== undefined}
+                    <div class="px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
+                      <div class="text-xs text-gray-500">OPS</div>
+                      <div class="font-semibold text-gray-900 text-sm">{guess.player.ops.toFixed(3)}</div>
+                    </div>
+                  {/if}
+                </div>
+
+                <!-- 세부 기록 토글 버튼 -->
+                <div class="mt-4 pt-3 border-t border-gray-200">
+                  <button 
+                    class="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                    onclick={() => toggleDetailedStats(guess.player.id)}
+                  >
+                    <span>세부 기록</span>
+                    <svg 
+                      class="w-4 h-4 transition-transform duration-200 {showDetailedStats[guess.player.id] ? 'rotate-180' : ''}"
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </button>
+
+                  <!-- 세부 기록 표시 -->
+                  {#if showDetailedStats[guess.player.id]}
+                    <div class="mt-3 p-3 bg-gray-50 rounded-md border border-gray-200">
+                      <h4 class="text-sm font-medium text-gray-900 mb-2">전체 기록</h4>
+                      <div class="grid grid-cols-2 gap-2 text-xs">
+                        {#each Object.entries(guess.player) as [key, value]}
+                          {#if key !== 'id' && key !== 'image_url' && value !== undefined && value !== null && value !== ''}
+                            <div class="flex justify-between py-1">
+                              <span class="text-gray-600">{key}:</span>
+                              <span class="font-medium text-gray-900">{value}</span>
+                            </div>
+                          {/if}
+                        {/each}
                       </div>
-                    {/if}
-                    
-                    {#if guess.player.home_runs !== undefined}
-                      <div class="p-2 sm:p-3 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg">
-                        <div class="text-xs sm:text-sm font-medium text-orange-700">홈런</div>
-                        <div class="font-bold text-orange-900 text-sm sm:text-base">{guess.player.home_runs}</div>
-                      </div>
-                    {/if}
-                    
-                    {#if guess.player.rbis !== undefined}
-                      <div class="p-2 sm:p-3 bg-gradient-to-r from-green-50 to-green-100 rounded-lg">
-                        <div class="text-xs sm:text-sm font-medium text-green-700">타점</div>
-                        <div class="font-bold text-green-900 text-sm sm:text-base">{guess.player.rbis}</div>
-                      </div>
-                    {/if}
-                    
-                    {#if guess.player.ops !== undefined}
-                      <div class="p-2 sm:p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg">
-                        <div class="text-xs sm:text-sm font-medium text-purple-700">OPS</div>
-                        <div class="font-bold text-purple-900 text-sm sm:text-base">{guess.player.ops.toFixed(3)}</div>
-                      </div>
-                    {/if}
-                    
-                    <!-- 도루는 KBO에서 제공X -->
-                    <!-- {#if guess.player.sb !== undefined && guess.player.sb > 0}
-                      <div class="p-2 sm:p-3 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg">
-                        <div class="text-xs sm:text-sm font-medium text-yellow-700">도루</div>
-                        <div class="font-bold text-yellow-900 text-sm sm:text-base">{guess.player.sb}</div>
-                      </div>
-                    {/if} -->
-                  </div>
+                    </div>
+                  {/if}
                 </div>
               </div>
             </div>
