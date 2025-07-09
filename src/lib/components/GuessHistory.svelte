@@ -7,7 +7,7 @@
   type SortDirection = 'asc' | 'desc';
 
   let sortKey: SortKey = $state('input');
-  let sortDirection: SortDirection = $state('asc');
+  let sortDirection: SortDirection = $state('desc');
   let expandedPlayerId: string | null = $state(null);
   let showDetailedStats: { [key: string]: boolean } = $state({});
 
