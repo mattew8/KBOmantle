@@ -8,6 +8,7 @@
   import PlayerInput from '../lib/components/PlayerInput.svelte';
   import GuessHistory from '../lib/components/GuessHistory.svelte';
   import GameComplete from '../lib/components/GameComplete.svelte';
+  import FAQ from '../lib/components/FAQ.svelte';
   import type { Player } from '../lib/utils/vector.js';
 
   let isLoading = $state(false);
@@ -88,5 +89,14 @@
     {#if gameInitialized && !$gameWon}
       <GuessHistory />
     {/if}
+    
+    {#if gameInitialized}
+      <FAQ />
+    {/if}
+  </div>
+  
+  <div class="px-2 py-10 text-xs text-center text-gray-700 dark:text-slate-400">
+    KBO와 선수 관련 정보는 공개된 데이터를 사용하며, 교육 목적으로만 제공됩니다.<br>
+    상업적 목적이 아니며, KBO와 관련 구단의 지적재산권을 침해할 의도는 없습니다.
   </div>
 </div>
