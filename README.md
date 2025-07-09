@@ -1,38 +1,92 @@
-# sv
+# KBOmantle
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+KBO 선수 맞추기 게임 inspired by Pokémantle and Semantle
 
-## Creating a project
+## 시작하기
 
-If you're seeing this, you've probably already done this step. Congrats!
+### 개발 환경 설정
 
 ```bash
-# create a new project in the current directory
-npx sv create
+# 저장소 클론
+git clone https://github.com/mattew8/KBOmantle
+cd kbomantle
 
-# create a new project in my-app
-npx sv create my-app
+# 의존성 설치
+npm install
+
+# 개발 서버 시작
+npm run dev # http://localhost:5173/
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+### 빌드 및 배포
 
 ```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
+# 프로덕션 빌드
 npm run build
+
+# 빌드 미리보기
+npm run preview
 ```
 
-You can preview the production build with `npm run preview`.
+### 테스트
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```bash
+# 테스트 실행
+npm run test
+
+# 테스트 실시간 감시
+npm run test:watch
+
+# 타입 체크
+npm run check
+```
+
+## 게임 방법
+
+1. 매일 새로운 KBO 타자가 정답으로 등장합니다 (2025 상반기 45인)
+2. 선수 이름을 입력하면 정답과의 벡터 기반 유사도(0-100%)가 표시됩니다
+3. 유사도가 높을수록 정답에 가까운 선수입니다
+4. 100% 유사도를 달성하면 승리!
+5. 게임 상태는 한국 시간 기준으로 매일 자정에 초기화됩니다
+
+## 기술 스택
+
+- **Frontend**: SvelteKit, TypeScript, Tailwind CSS
+- **테스트**: Vitest
+- **빌드**: Vite
+- **배포**: Vercel
+
+## 유사도 계산 방식
+
+KBOmantle은 벡터 기반 코사인 유사도를 사용합니다:
+
+**타자 벡터**:
+
+- **핵심 타격 능력**: 타율, 장타율, 출루율, OPS
+- **파워 지표**: 홈런, ISO, 장타수, 2루타, 3루타
+- **생산성 지표**: 타점, 득점, 결승타
+- **선구안 및 컨택**: 볼넷, 삼진, BB/K 비율, 구당 타석수
+- **클러치 능력**: 득점권 타율, 멀티히트
+- **타구 성향**: GO/AO 비율, 병살타
+- **활용도**: 출장경기수, 타석수
+- **고급 지표**: GPA, Extra Runs
+- **개인 정보**: 나이 (생년월일 기준 계산)
+- **팀 정보**: 10개 KBO 팀 원핫 인코딩 (LG, KT, SSG, 한화, NC, 두산, KIA, 롯데, 삼성, 키움)
+- **포지션 정보**: 포수/내야수/외야수 원핫 인코딩
+
+모든 스탯은 0-1 범위로 정규화되며, 중요도에 따라 가중치가 적용됩니다.
+
+## 게임 기능
+
+- **데일리 시스템**: 매일 자정(KST) 기준 새로운 선수 등장
+- **진행 상황 저장**: 게임 진행 상태가 localStorage에 자동 저장
+- **추측 기록**: 모든 추측과 유사도가 정렬되어 표시
+- **결과 공유**: 게임 완료 시 결과 공유 기능
+
+## 데이터 소스
+
+선수 데이터는 KBO 공식 통계를 기반으로 합니다 (2025 상반기 타자 45인).
+
+## 라이선스
+
+MIT
