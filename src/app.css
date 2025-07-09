@@ -6,10 +6,45 @@
   body {
     font-family: 'Noto Sans KR', sans-serif;
   }
+  
+  /* 모바일 터치 최적화 */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* 터치 영역 최적화 */
+  button, input, select, textarea {
+    touch-action: manipulation;
+  }
+  
+  /* 확대/축소 방지 */
+  input[type="text"], input[type="search"] {
+    font-size: 16px;
+  }
+  
+  /* 스크롤바 숨기기 (모바일) */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer components {
   .container {
     @apply max-w-6xl mx-auto px-4;
+  }
+  
+  /* 모바일 반응형 유틸리티 */
+  .mobile-safe {
+    @apply pb-safe;
+  }
+  
+  /* 터치 친화적 버튼 */
+  .touch-button {
+    @apply min-h-[44px] min-w-[44px] touch-manipulation;
   }
 }

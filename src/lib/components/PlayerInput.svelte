@@ -107,39 +107,42 @@
 
 <div class="relative mx-auto w-full max-w-lg">
   <div class="flex gap-2">
-    <input
-      bind:this={inputElement}
-      bind:value={$currentInput}
-      onkeydown={handleKeydown}
-      onblur={handleBlur}
-      placeholder="선수 이름을 입력하세요..."
-      class="px-4 py-3 flex-1 text-base rounded-lg border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-    />
+    <div class="relative flex-1">
+      <input
+        bind:this={inputElement}
+        bind:value={$currentInput}
+        onkeydown={handleKeydown}
+        onblur={handleBlur}
+        placeholder="선수 이름을 입력하세요..."
+        class="px-3 py-2 sm:px-4 sm:py-3 w-full text-sm sm:text-base rounded-lg border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 min-h-[44px] touch-manipulation"
+      />
+      
+      {#if suggestions.length > 0}
+        <div class="absolute left-0 top-full z-10 mt-1 w-full bg-white rounded-lg border border-gray-200 shadow-lg max-h-60 overflow-y-auto">
+          {#each suggestions as player, index}
+            <button
+              onclick={() => selectPlayer(player)}
+              class="w-full px-3 py-2 sm:px-4 sm:py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 {selectedIndex === index ? 'bg-blue-50' : ''} touch-manipulation"
+            >
+              <div class="text-sm font-medium text-gray-900">{player.name}</div>
+              <div class="flex flex-wrap gap-1 sm:gap-2 items-center mt-1 text-xs text-gray-600">
+                <span class="px-2 py-1 text-xs text-gray-700 bg-gray-100 rounded">{player.team}</span>
+                <span class="hidden sm:inline">{player.position.replace(/\([^)]*\)/g, '').trim()}</span>
+                <span class="text-xs sm:text-xs">타율 {player.avg.toFixed(3)}</span>
+                <span class="text-xs sm:text-xs">{player.home_runs}HR</span>
+              </div>
+            </button>
+          {/each}
+        </div>
+      {/if}
+    </div>
+    
     <button
       onclick={handleGuess}
       disabled={!$currentInput.trim()}
-      class="px-6 py-3 text-base font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+      class="px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors min-h-[44px] touch-manipulation whitespace-nowrap"
     >
       추측하기
     </button>
   </div>
-
-  {#if suggestions.length > 0}
-    <div class="absolute left-0 top-full z-10 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg" style="right: 100px;">
-      {#each suggestions as player, index}
-        <button
-          onclick={() => selectPlayer(player)}
-          class="w-full px-4 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 {selectedIndex === index ? 'bg-blue-50' : ''}"
-        >
-          <div class="text-sm font-medium text-gray-900">{player.name}</div>
-          <div class="flex gap-2 items-center mt-1 text-xs text-gray-600">
-            <span class="px-2 py-1 text-xs text-gray-700 bg-gray-100 rounded">{player.team}</span>
-            <span>{player.position.replace(/\([^)]*\)/g, '').trim()}</span>
-            <span>타율 {player.avg.toFixed(3)}</span>
-            <span>{player.home_runs}HR</span>
-          </div>
-        </button>
-      {/each}
-    </div>
-  {/if}
 </div>
