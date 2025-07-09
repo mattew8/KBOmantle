@@ -1,17 +1,28 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<link rel="preconnect" href="https://fonts.googleapis.com">
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
-		<title>KBOmantle - KBO 선수 유사도 게임</title>
-		<meta name="description" content="벡터 기반 유사도로 KBO 야구 선수를 맞추는 데일리 퍼즐 게임">
-		%sveltekit.head%
-	</head>
-	<body data-sveltekit-preload-data="hover">
-		<div style="display: contents">%sveltekit.body%</div>
-	</body>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%sveltekit.assets%/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>KBOmantle - KBO 야구 선수 유사도 게임</title>
+    <meta
+      name="description"
+      content="오늘의 KBO 야구 선수를 맞춰보세요! 선수 이름을 입력하면 정답과 얼마나 비슷한지 알려줍니다."
+    />
+    <meta
+      property="og:description"
+      content="오늘의 KBO 야구 선수를 맞춰보세요! 선수 이름을 입력하면 정답과 얼마나 비슷한지 알려줍니다."
+    />
+    <meta property="og:image" content="/mascot.png" />
+    %sveltekit.head%
+  </head>
+  <body data-sveltekit-preload-data="hover">
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
 </html>

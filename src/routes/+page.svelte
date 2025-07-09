@@ -51,11 +51,10 @@
   <div class="px-4 mx-auto max-w-2xl">
     <header class="mb-6 text-center">
       <h1 class="mb-1 text-3xl font-bold text-gray-900">{CONFIG.SITE_NAME}</h1>
-      <p class="text-sm text-gray-600">{CONFIG.SITE_DESCRIPTION}</p>
       
       {#if gameInitialized}
         <div class="mt-3 text-xs text-gray-500">
-          오늘의 정답: <strong>KBO 타자</strong> • {getTodayDateKST()}
+          오늘의 정답: <strong>타자</strong> • {getTodayDateKST()}
         </div>
       {/if}
     </header>

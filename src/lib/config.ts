@@ -4,15 +4,16 @@
 export const CONFIG = {
   // 사이트 정보
   SITE_NAME: "KBOmantle",
-  SITE_URL: "https://kbomantle.com",
-  SITE_DESCRIPTION: "벡터 기반 KBO 선수 유사도 게임",
+  SITE_URL: "https://kbomantle.vercel.app/",
+  SITE_DESCRIPTION:
+    "오늘의 KBO 야구 선수를 맞춰보세요! 선수 이름을 입력하면 정답과 얼마나 비슷한지 알려줍니다.",
 
   // 소셜 정보
   TWITTER_HANDLE: "@kbomantle",
 
   // 게임 설정
   GAME_NAME: "KBOmantle",
-  GAME_HASHTAGS: ["#KBOmantle", "#KBO", "#야구게임"],
+  GAME_HASHTAGS: ["#KBOmantle", "#KBO", "#야구", "#야구게임"],
 
   // 로컬 스토리지 설정
   STORAGE_PREFIX: "kbomantle_",
