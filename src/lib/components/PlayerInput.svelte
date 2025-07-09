@@ -61,6 +61,11 @@
       currentInput.set('');
       suggestions = [];
       selectedIndex = -1;
+      
+      // 추측 후 input에 다시 포커스
+      setTimeout(() => {
+        inputElement?.focus();
+      }, 100);
     }
   }
 

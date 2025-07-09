@@ -27,7 +27,7 @@ export const hasGuessedPlayer = derived(guesses, ($guesses) => {
   return (playerId: string) => $guesses.some((g) => g.player.id === playerId);
 });
 
-export function addGuess(player: Player, similarity: number) {
+export function addGuess(player: Player, similarity: number, targetPlayer: Player | null = null) {
   guesses.update((current) => [
     ...current,
     {
@@ -37,7 +37,8 @@ export function addGuess(player: Player, similarity: number) {
     },
   ]);
 
-  if (similarity >= 99.9) {
+  // 정답 판정은 선수 ID가 정확히 일치할 때만
+  if (targetPlayer && player.id === targetPlayer.id) {
     gameWon.set(true);
   }
 }
