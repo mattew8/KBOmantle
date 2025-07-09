@@ -74,7 +74,6 @@
     <div class="px-4 py-4 bg-white dark:bg-slate-800">
       <p class="leading-relaxed text-gray-700 dark:text-slate-300">
         아니오. 하루에 한 번만 플레이할 수 있습니다.
-        저희는 Wordle과 같은 게임의 핵심 요소는 "하루에 한 번만, 모두가 동일한 정답"이라고 생각합니다.
         매일 자정(한국 시간)에 새로운 문제가 업데이트됩니다.
       </p>
     </div>
@@ -120,7 +119,8 @@
     <div class="px-4 py-4 bg-white dark:bg-slate-800">
       <p class="leading-relaxed text-gray-700 dark:text-slate-300">
         네. {CONFIG.SITE_NAME}은 오픈소스 프로젝트입니다. 
-        GitHub에서 소스 코드를 확인하고 기여하실 수 있습니다. 
+        <a href="https://github.com/mattew8/KBOmantle" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">GitHub</a>
+        에서 소스 코드를 확인하고 기여하실 수 있습니다. 
         SvelteKit과 TypeScript로 개발되었습니다.
       </p>
     </div>
@@ -135,8 +135,8 @@
     </summary>
     <div class="px-4 py-4 bg-white dark:bg-slate-800">
       <p class="leading-relaxed text-gray-700 dark:text-slate-300">
-        GitHub Issues를 통해 버그 리포트나 기능 제안을 보내주세요. 
-        또는 Twitter/X에서 {CONFIG.GAME_HASHTAGS.join(' ')} 해시태그를 사용해 의견을 공유해주세요.
+        <a href="https://github.com/mattew8/KBOmantle/issues" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">GitHub Issuses</a>
+        를 통해 버그 리포트나 기능 제안을 보내주세요. 
       </p>
     </div>
   </details>
