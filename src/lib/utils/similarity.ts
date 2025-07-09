@@ -24,33 +24,58 @@ export function calculateVectorSimilarity(guessPlayer: Player, targetPlayer: Pla
 
   // 디버깅을 위해 콘솔에 벡터 정보 출력
   console.log('=== 유사도 디버깅 ===');
-  console.log('추측 선수:', guessPlayer.name);
-  console.log('추측 벡터:', guessVector);
-  console.log('정답 선수:', targetPlayer.name);
-  console.log('정답 벡터:', targetVector);
+  console.log('추측 선수:', guessPlayer.name, guessPlayer.id);
+  console.log('정답 선수:', targetPlayer.name, targetPlayer.id);
+  console.log('벡터 차원:', guessVector.length);
   
   const rawSimilarity = cosineSimilarity(guessVector, targetVector);
   console.log('원본 코사인 유사도:', rawSimilarity);
   
-  // 비선형 변환으로 차이 극대화
+  // 🎆 순수 벡터 기반 비선형 변환 - 자연스러운 분포
   let adjustedSimilarity;
-  if (rawSimilarity > 85) {
-    // 85% 이상은 매우 유사 (85-100 구간을 60-100으로 확장)
-    adjustedSimilarity = 60 + (rawSimilarity - 85) * (40 / 15);
+  
+  if (rawSimilarity > 99) {
+    // 99%+ = “정답에 근접” 🔥 (99-100 → 90-100)
+    adjustedSimilarity = 90 + (rawSimilarity - 99) * (10 / 1);
+  } else if (rawSimilarity > 97) {
+    // 97-99% = “매우 뜨거운” 🔥 (97-99 → 75-90)
+    adjustedSimilarity = 75 + (rawSimilarity - 97) * (15 / 2);
+  } else if (rawSimilarity > 94) {
+    // 94-97% = “뜨거운” 🔥 (94-97 → 60-75)
+    adjustedSimilarity = 60 + (rawSimilarity - 94) * (15 / 3);
+  } else if (rawSimilarity > 90) {
+    // 90-94% = “따뜻한” 🔥 (90-94 → 45-60)
+    adjustedSimilarity = 45 + (rawSimilarity - 90) * (15 / 4);
+  } else if (rawSimilarity > 85) {
+    // 85-90% = “미지근하지” 🔥 (85-90 → 32-45)
+    adjustedSimilarity = 32 + (rawSimilarity - 85) * (13 / 5);
+  } else if (rawSimilarity > 80) {
+    // 80-85% = “서늘하지” 🔥 (80-85 → 22-32)
+    adjustedSimilarity = 22 + (rawSimilarity - 80) * (10 / 5);
   } else if (rawSimilarity > 70) {
-    // 70-85%는 유사 (70-85 구간을 30-60으로 확장) 
-    adjustedSimilarity = 30 + (rawSimilarity - 70) * (30 / 15);
+    // 70-80% = “살짝 차가운” 🔥 (70-80 → 12-22)
+    adjustedSimilarity = 12 + (rawSimilarity - 70) * (10 / 10);
+  } else if (rawSimilarity > 60) {
+    // 60-70% = “차가운” 🧊 (60-70 → 6-12)
+    adjustedSimilarity = 6 + (rawSimilarity - 60) * (6 / 10);
   } else if (rawSimilarity > 50) {
-    // 50-70%는 보통 (50-70 구간을 10-30으로 확장)
-    adjustedSimilarity = 10 + (rawSimilarity - 50) * (20 / 20);
+    // 50-60% = “차가운” 🧊 (50-60 → 2-6)
+    adjustedSimilarity = 2 + (rawSimilarity - 50) * (4 / 10);
+  } else if (rawSimilarity > 40) {
+    // 40-50% = “얼음” 🧊 (40-50 → 0.5-2)
+    adjustedSimilarity = 0.5 + (rawSimilarity - 40) * (1.5 / 10);
   } else {
-    // 50% 이하는 매우 다름 (0-50 구간을 0-10으로 압축)
-    adjustedSimilarity = rawSimilarity * (10 / 50);
+    // 0-40% = “얼음” 🧊 (0-40 → 0-0.5)
+    adjustedSimilarity = rawSimilarity * (0.5 / 40);
   }
   
   console.log('조정된 유사도:', adjustedSimilarity);
   
-  return Math.max(0, Math.min(100, adjustedSimilarity));
+  // 소수점 한 자리로 반올림하여 정밀도 차이 최소화
+  const roundedSimilarity = Math.round(adjustedSimilarity * 10) / 10;
+  console.log('반올림된 최종 유사도:', roundedSimilarity);
+  
+  return Math.max(0, Math.min(100, roundedSimilarity));
 }
 
 const vectorCache = new Map<string, number[]>();
