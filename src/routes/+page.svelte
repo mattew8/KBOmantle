@@ -1,27 +1,34 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { targetPlayer, gameWon, gameStarted, addGuess } from '../lib/stores/game.js';
-  import { getRandomPlayer } from '../lib/stores/players.js';
+  import { targetPlayer, gameWon, gameStarted, addGuess, initializeDailyGame } from '../lib/stores/game.js';
+  import { allPlayers } from '../lib/stores/players.js';
   import { calculateVectorSimilarity } from '../lib/utils/similarity.js';
+  import { getTodayDateKST } from '../lib/utils/daily.js';
   import PlayerInput from '../lib/components/PlayerInput.svelte';
   import GuessHistory from '../lib/components/GuessHistory.svelte';
+  import GameComplete from '../lib/components/GameComplete.svelte';
   import type { Player } from '../lib/utils/vector.js';
 
   let isLoading = $state(false);
   let error = $state('');
+  let gameInitialized = $state(false);
 
   onMount(() => {
-    startNewGame();
+    initializeGame();
   });
 
-  function startNewGame() {
-    const randomPlayer = getRandomPlayer();
-    targetPlayer.set(randomPlayer);
-    gameStarted.set(true);
+  function initializeGame() {
+    // 데일리 게임 초기화
+    const isCompleted = initializeDailyGame($allPlayers);
+    gameInitialized = true;
+    
+    if (isCompleted) {
+      // 이미 완료된 게임인 경우 완료 상태로 설정
+      gameWon.set(true);
+    }
   }
 
   async function handleGuess(guessedPlayer: Player) {
-    
     if (!$targetPlayer) return;
     
     isLoading = true;
@@ -36,10 +43,6 @@
       isLoading = false;
     }
   }
-
-  function handleNewGame() {
-    startNewGame();
-  }
 </script>
 
 <div class="py-4 min-h-screen bg-gray-50">
@@ -48,24 +51,20 @@
       <h1 class="mb-1 text-3xl font-bold text-gray-900">KBOmantle</h1>
       <p class="text-sm text-gray-600">벡터 기반 KBO 선수 유사도 게임</p>
       
-      {#if $targetPlayer}
+      {#if gameInitialized}
         <div class="mt-3 text-xs text-gray-500">
-          오늘의 정답: <strong>KBO 타자</strong>
+          오늘의 정답: <strong>KBO 타자</strong> • {getTodayDateKST()}
         </div>
       {/if}
     </header>
 
-    {#if $gameWon}
-      <div class="p-4 mb-6 text-center bg-green-50 rounded-lg border border-green-200">
-        <h2 class="mb-1 text-xl font-bold text-green-800">🎉 축하합니다!</h2>
-        <p class="mb-3 text-sm text-green-700">정답은 <strong>{$targetPlayer?.name}</strong>입니다!</p>
-        <button
-          onclick={handleNewGame}
-          class="px-4 py-2 text-sm text-white bg-green-600 rounded-lg transition-colors hover:bg-green-700"
-        >
-          새 게임 시작
-        </button>
+    {#if !gameInitialized}
+      <div class="flex justify-center items-center h-32">
+        <div class="inline-block w-8 h-8 rounded-full border-b-2 border-blue-600 animate-spin"></div>
+        <p class="ml-3 text-gray-600">게임 로딩 중...</p>
       </div>
+    {:else if $gameWon}
+      <GameComplete />
     {:else if $gameStarted}
       <div class="mb-6">
         <PlayerInput onguess={handleGuess} />
@@ -85,6 +84,8 @@
       </div>
     {/if}
 
-    <GuessHistory />
+    {#if gameInitialized && !$gameWon}
+      <GuessHistory />
+    {/if}
   </div>
 </div>

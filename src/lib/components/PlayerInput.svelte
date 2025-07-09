@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { availablePlayers } from '../stores/players.js';
+  import { allPlayers } from '../stores/players.js';
   import { currentInput, hasGuessedPlayer } from '../stores/game.js';
   import { searchPlayers } from '../stores/players.js';
   import type { Player } from '../utils/vector.js';
@@ -52,7 +52,7 @@
   function handleGuess() {
     if (!$currentInput.trim()) return;
     
-    const exactMatch = $availablePlayers.find(p =>
+    const exactMatch = $allPlayers.find(p =>
       p.name.toLowerCase() === $currentInput.trim().toLowerCase()
     );
     
