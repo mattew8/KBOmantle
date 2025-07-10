@@ -12,7 +12,7 @@
     </summary>
     <div class="px-3 py-3 bg-white sm:px-4 sm:py-4 dark:bg-slate-800">
       <p class="text-sm leading-relaxed text-gray-700 sm:text-base dark:text-slate-300">
-        {CONFIG.SITE_NAME}은 인기 게임 Pokémantle의 KBO 버전입니다. 
+        {CONFIG.SITE_NAME}은 인기 게임 <a href="https://pokemantle.update.sh/" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">Pokémantle</a>의 KBO 버전입니다. 
         매일 새로운 KBO 선수가 정답으로 등장하며, 선수 이름을 입력하면 정답과 얼마나 비슷한지 벡터 기반 유사도로 알려줍니다.
         높은 유사도를 단서로 정답을 찾아보세요!
       </p>

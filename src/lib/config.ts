@@ -32,7 +32,7 @@ export const generateShareText = (
   isWon: boolean
 ) => {
   const date = new Date().toLocaleDateString("ko-KR");
-  const baseText = `${CONFIG.GAME_NAME} ${date} ${attempts}/∞\n\n`;
+  const baseText = `${CONFIG.GAME_NAME} ${date}\n\n`;
 
   if (isWon) {
     return `${baseText}${attempts}번 만에 ${playerName}를 맞췄습니다! 🎉\n\n${CONFIG.GAME_HASHTAGS.join(
