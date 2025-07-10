@@ -1,13 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { Player } from '$lib/utils/vector';
-  import { getCachedVector } from '$lib/utils/similarity';
+  import { getCachedVector, cosineSimilarity } from '$lib/utils/similarity';
   import playersData from '$lib/data/players.json';
 
   let allPlayers: Player[] = playersData;
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
   let tooltip = { visible: false, x: 0, y: 0, player: null as Player | null };
+  let lineTooltip = { visible: false, x: 0, y: 0, player1: null as Player | null, player2: null as Player | null, similarity: 0, explanation: '' };
   let canvasContainer: HTMLDivElement;
   let showGuideModal = false;
 
@@ -130,23 +131,89 @@
     }
   }
 
-  // 코사인 유사도 계산
-  function cosineSimilarity(vecA: number[], vecB: number[]): number {
-    if (vecA.length !== vecB.length) return 0;
 
-    const validVecA = vecA.map((v) => (isNaN(v) ? 0 : v));
-    const validVecB = vecB.map((v) => (isNaN(v) ? 0 : v));
+  // 생년월일에서 나이 계산 함수
+  function calculateAge(birthDate: string): number {
+    // "1994년 10월 05일" 형태에서 연도 추출
+    const yearMatch = birthDate.match(/(\d{4})년/);
+    if (!yearMatch) return 0;
+    
+    const birthYear = parseInt(yearMatch[1]);
+    const currentYear = new Date().getFullYear();
+    return currentYear - birthYear;
+  }
 
-    const dotProduct = validVecA.reduce((sum, a, i) => sum + a * validVecB[i], 0);
+  // 유사도 설명 생성 함수
+  function generateSimilarityExplanation(player1: Player, player2: Player): string {
+    const reasons: string[] = [];
+    
+    // 팀 비교
+    if (player1.team === player2.team) {
+      reasons.push(`같은 팀 (${player1.team})`);
+    }
+    
+    // 포지션 비교
+    if (player1.position === player2.position) {
+      reasons.push(`같은 포지션 (${player1.position})`);
+    }
+    
+    // 나이 비교
+    const age1 = calculateAge(player1.birth_date);
+    const age2 = calculateAge(player2.birth_date);
+    const ageDiff = Math.abs(age1 - age2);
+    if (ageDiff <= 2) {
+      reasons.push(`비슷한 나이 (${age1}세, ${age2}세)`);
+    }
+    
+    // 스탯 비교 (타자의 경우)
+    if (player1.avg && player2.avg) {
+      const avgDiff = Math.abs(player1.avg - player2.avg);
+      if (avgDiff <= 0.05) {
+        reasons.push(`비슷한 타율 (${player1.avg.toFixed(3)}, ${player2.avg.toFixed(3)})`);
+      }
+      
+      const hrDiff = Math.abs(player1.home_runs - player2.home_runs);
+      if (hrDiff <= 5) {
+        reasons.push(`비슷한 홈런 수 (${player1.home_runs}개, ${player2.home_runs}개)`);
+      }
+      
+      const opsDiff = Math.abs(player1.ops - player2.ops);
+      if (opsDiff <= 0.1) {
+        reasons.push(`비슷한 OPS (${player1.ops.toFixed(3)}, ${player2.ops.toFixed(3)})`);
+      }
+    }
+    
+    if (reasons.length === 0) {
+      return '종합적인 벡터 특성이 매우 유사합니다';
+    }
+    
+    return reasons.join(', ');
+  }
 
-    const magnitudeA = Math.sqrt(validVecA.reduce((sum, a) => sum + a * a, 0));
-    const magnitudeB = Math.sqrt(validVecB.reduce((sum, b) => sum + b * b, 0));
+  // 선에 대한 거리 계산 함수
+  function distanceToLine(x: number, y: number, x1: number, y1: number, x2: number, y2: number): number {
+    const A = x - x1;
+    const B = y - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
 
-    if (magnitudeA === 0 || magnitudeB === 0) return 0;
-
-    const similarity = dotProduct / (magnitudeA * magnitudeB);
-
-    return Math.max(0, Math.min(100, ((similarity + 1) / 2) * 100));
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D;
+    
+    if (lenSq === 0) return Math.sqrt(A * A + B * B);
+    
+    let param = dot / lenSq;
+    
+    if (param < 0) {
+      param = 0;
+    } else if (param > 1) {
+      param = 1;
+    }
+    
+    const xx = x1 + param * C;
+    const yy = y1 + param * D;
+    
+    return Math.sqrt((x - xx) * (x - xx) + (y - yy) * (y - yy));
   }
 
   // 마우스 이벤트 핸들러
@@ -181,34 +248,78 @@
       padding + ((y - minY) / (maxY - minY)) * (canvas.height - 2 * padding)
     ]);
     
-    // 가장 가까운 선수 찾기
-    let closestPlayer = null;
-    let minDistance = Infinity;
+    // 먼저 선(line)에 대한 hover 체크
+    let closestLine = null;
+    let minLineDistance = Infinity;
     
-    allPlayers.forEach((player, i) => {
-      const [x, y] = normalizedPoints[i];
-      const distance = Math.sqrt((canvasX - x) ** 2 + (canvasY - y) ** 2);
-      
-      if (distance < 20 && distance < minDistance) { // 20px 이내
-        minDistance = distance;
-        closestPlayer = player;
+    for (let i = 0; i < allPlayers.length; i++) {
+      for (let j = i + 1; j < allPlayers.length; j++) {
+        const similarity = cosineSimilarity(vectors[i], vectors[j]);
+        
+        if (similarity > 90) {
+          const [x1, y1] = normalizedPoints[i];
+          const [x2, y2] = normalizedPoints[j];
+          
+          const lineDistance = distanceToLine(canvasX, canvasY, x1, y1, x2, y2);
+          
+          if (lineDistance < 5 && lineDistance < minLineDistance) { // 5px 이내
+            minLineDistance = lineDistance;
+            closestLine = {
+              player1: allPlayers[i],
+              player2: allPlayers[j],
+              similarity: similarity,
+              explanation: generateSimilarityExplanation(allPlayers[i], allPlayers[j])
+            };
+          }
+        }
       }
-    });
+    }
     
-    if (closestPlayer) {
-      tooltip = {
+    if (closestLine) {
+      // 선에 hover한 경우
+      lineTooltip = {
         visible: true,
         x: event.clientX,
         y: event.clientY,
-        player: closestPlayer
+        player1: closestLine.player1,
+        player2: closestLine.player2,
+        similarity: closestLine.similarity,
+        explanation: closestLine.explanation
       };
-    } else {
       tooltip = { visible: false, x: 0, y: 0, player: null };
+    } else {
+      // 선수 포인트에 hover 체크
+      let closestPlayer = null;
+      let minDistance = Infinity;
+      
+      allPlayers.forEach((player, i) => {
+        const [x, y] = normalizedPoints[i];
+        const distance = Math.sqrt((canvasX - x) ** 2 + (canvasY - y) ** 2);
+        
+        if (distance < 20 && distance < minDistance) { // 20px 이내
+          minDistance = distance;
+          closestPlayer = player;
+        }
+      });
+      
+      if (closestPlayer) {
+        tooltip = {
+          visible: true,
+          x: event.clientX,
+          y: event.clientY,
+          player: closestPlayer
+        };
+        lineTooltip = { visible: false, x: 0, y: 0, player1: null, player2: null, similarity: 0, explanation: '' };
+      } else {
+        tooltip = { visible: false, x: 0, y: 0, player: null };
+        lineTooltip = { visible: false, x: 0, y: 0, player1: null, player2: null, similarity: 0, explanation: '' };
+      }
     }
   }
 
   function handleMouseLeave() {
     tooltip = { visible: false, x: 0, y: 0, player: null };
+    lineTooltip = { visible: false, x: 0, y: 0, player1: null, player2: null, similarity: 0, explanation: '' };
   }
 
   function resizeCanvas() {
@@ -334,6 +445,64 @@
     
     <div class="mt-2 text-xs text-gray-400">
       {tooltip.player.birth_date} • {tooltip.player.height_weight}
+    </div>
+  </div>
+{/if}
+
+<!-- 선 툴팁 -->
+{#if lineTooltip.visible && lineTooltip.player1 && lineTooltip.player2}
+  <div 
+    class="fixed z-50 p-4 max-w-sm text-sm bg-white rounded-xl shadow-xl border border-gray-200 pointer-events-none"
+    style="left: {lineTooltip.x + 10}px; top: {lineTooltip.y - 10}px;"
+  >
+    <!-- 유사도 헤더 -->
+    <div class="flex items-center mb-3">
+      <div class="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full mr-3">
+        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+        </svg>
+      </div>
+      <div>
+        <div class="text-lg font-bold text-gray-900">유사도 {lineTooltip.similarity.toFixed(1)}%</div>
+        <div class="text-xs text-gray-500">벡터 기반 계산</div>
+      </div>
+    </div>
+    
+    <!-- 선수 정보 -->
+    <div class="mb-3 p-3 bg-gray-50 rounded-lg">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex-1 text-center">
+          <div class="font-semibold text-gray-900">{lineTooltip.player1.name}</div>
+          <div class="text-xs text-gray-500">{lineTooltip.player1.team}</div>
+        </div>
+        <div class="mx-3 text-gray-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18"></path>
+          </svg>
+        </div>
+        <div class="flex-1 text-center">
+          <div class="font-semibold text-gray-900">{lineTooltip.player2.name}</div>
+          <div class="text-xs text-gray-500">{lineTooltip.player2.team}</div>
+        </div>
+      </div>
+      <div class="text-xs text-center text-gray-400">
+        {lineTooltip.player1.position} • {lineTooltip.player2.position}
+      </div>
+    </div>
+    
+    <!-- 유사도 설명 -->
+    <div class="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+      <div class="flex items-start">
+        <div class="flex-shrink-0 w-4 h-4 mt-0.5 mr-2">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div class="flex-1">
+          <div class="text-xs font-medium text-blue-800 mb-1">유사한 이유</div>
+          <div class="text-sm text-blue-700">{lineTooltip.explanation}</div>
+        </div>
+      </div>
     </div>
   </div>
 {/if}
