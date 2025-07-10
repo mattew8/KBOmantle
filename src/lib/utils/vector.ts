@@ -87,7 +87,7 @@ export function createBatterVector(player: Player): number[] {
   // 🎯 원핫인코딩 - 팀 벡터 (10개 팀) - 포케맨틀 스타일 가중치
   const teamOneHot = new Array(10).fill(0);
   const teamIndex = Object.keys(TEAM_CODES).indexOf(player.team);
-  if (teamIndex !== -1) teamOneHot[teamIndex] = 8; // 팀 일치시 큰 유사도 기여
+  if (teamIndex !== -1) teamOneHot[teamIndex] = 4; // 팀 일치시 중간 유사도 기여
 
   // 🎯 원핫인코딩 - 포지션 벡터 (3개 포지션) - 포케맨틀 스타일 가중치
   const positionOneHot = new Array(3).fill(0);
