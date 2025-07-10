@@ -64,9 +64,11 @@
         <div class="inline-block w-8 h-8 rounded-full border-b-2 border-blue-600 animate-spin"></div>
         <p class="ml-3 text-gray-600">게임 로딩 중...</p>
       </div>
-    {:else if $gameWon}
-      <GameComplete />
     {:else if $gameStarted}
+      {#if $gameWon}
+        <GameComplete />
+      {/if}
+      
       <div class="mb-4 sm:mb-6">
         <PlayerInput onguess={handleGuess} />
         
@@ -85,7 +87,7 @@
       </div>
     {/if}
 
-    {#if gameInitialized && !$gameWon}
+    {#if gameInitialized && $gameStarted}
       <GuessHistory />
     {/if}
     

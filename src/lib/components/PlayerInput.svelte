@@ -72,10 +72,8 @@
   }
 
   function handleKeydown(event: KeyboardEvent) {
-    console.log('핸들키다운')
     if (event.key === 'ArrowDown') {
       event.preventDefault();
-      console.log(selectedIndex,"셀렉인덱")
       if (selectedIndex === -1) {
         selectedIndex = 0;
       } else {
@@ -124,7 +122,7 @@
         onkeydown={handleKeydown}
         onblur={handleBlur}
         placeholder="선수 이름을 입력하세요..."
-        class="px-3 py-2 sm:px-4 sm:py-3 w-full text-sm sm:text-base rounded-lg border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 min-h-[44px] touch-manipulation"
+        class="px-3 py-2 sm:px-4 sm:py-3 w-full text-base sm:text-base rounded-lg border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 min-h-[44px] touch-manipulation"
       />
       
       {#if suggestions.length > 0}

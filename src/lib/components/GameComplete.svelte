@@ -8,7 +8,6 @@
   let interval: number;
   
   onMount(() => {
-    // 1초마다 시간 업데이트
     interval = setInterval(() => {
       timeUntilTomorrow = getTimeUntilTomorrow();
     }, 1000);
@@ -25,257 +24,167 @@
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
   
-  function shareResult() {
-    if (!$targetPlayer || !$dailyGameState) return;
+  let isSharing = false;
+  let shareSuccess = false;
+
+  async function shareResult() {
+    if (!$targetPlayer || !$dailyGameState || isSharing) return;
     
+    isSharing = true;
     const attempts = $attemptCount;
     const playerName = $targetPlayer.name;
     const shareText = generateShareText(attempts, playerName, true);
     
-    if (navigator.share) {
-      navigator.share({
-        title: `${CONFIG.GAME_NAME} 결과`,
-        text: shareText,
-        url: CONFIG.SITE_URL
-      });
-    } else {
-      // 클립보드에 복사
-      navigator.clipboard.writeText(shareText).then(() => {
-        alert('결과가 클립보드에 복사되었습니다!');
-      });
+    try {
+      // Web Share API 지원 확인
+      if (navigator.share && navigator.canShare) {
+        const shareData = {
+          title: `${CONFIG.GAME_NAME} 결과`,
+          text: shareText,
+          url: CONFIG.SITE_URL
+        };
+        
+        // canShare로 데이터 유효성 확인
+        if (navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+          return;
+        }
+      }
+      
+      // Web Share API 미지원 시 폴백 - 클립보드 복사
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareText);
+        shareSuccess = true;
+        setTimeout(() => {
+          shareSuccess = false;
+        }, 2000);
+      } else {
+        // 클립보드 API 미지원 시 execCommand 사용
+        const textArea = document.createElement('textarea');
+        textArea.value = shareText;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+          const successful = document.execCommand('copy');
+          if (successful) {
+            shareSuccess = true;
+            setTimeout(() => {
+              shareSuccess = false;
+            }, 2000);
+          } else {
+            throw new Error('execCommand failed');
+          }
+        } catch (fallbackError) {
+          // 최후의 수단: 프롬프트로 텍스트 표시
+          prompt('아래 텍스트를 복사해주세요:', shareText);
+        }
+        
+        document.body.removeChild(textArea);
+      }
+    } catch (err: any) {
+      // 사용자가 공유를 취소한 경우는 에러로 처리하지 않음
+      if (err.name !== 'AbortError') {
+        console.error('공유 실패:', err);
+        // 에러 발생 시 클립보드 복사로 폴백
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(shareText);
+            shareSuccess = true;
+            setTimeout(() => {
+              shareSuccess = false;
+            }, 2000);
+          } else {
+            prompt('아래 텍스트를 복사해주세요:', shareText);
+          }
+        } catch (clipboardErr) {
+          prompt('아래 텍스트를 복사해주세요:', shareText);
+        }
+      }
+    } finally {
+      isSharing = false;
     }
   }
 </script>
 
-<div class="game-complete-container">
-  <div class="result-card">
-    <h2 class="congratulations">🎉 축하합니다!</h2>
-    
-    {#if $targetPlayer}
-      <div class="answer-section">
-        <h3>오늘의 정답</h3>
-        <div class="player-info">
-          <img src={$targetPlayer.image_url} alt={$targetPlayer.name} class="player-image" />
-          <div class="player-details">
-            <h4>{$targetPlayer.name}</h4>
-            <p>{$targetPlayer.team} • {$targetPlayer.position}</p>
-            <div class="player-stats">
-              <span>타율: {$targetPlayer.avg.toFixed(3)}</span>
-              <span>홈런: {$targetPlayer.home_runs}개</span>
-              <span>타점: {$targetPlayer.rbis}개</span>
-              <span>OPS: {$targetPlayer.ops.toFixed(3)}</span>
-            </div>
+<div class="mb-6">
+  <!-- Hero Section -->
+  <div class="mb-6 text-center">
+    <h1 class="mb-2 text-2xl font-bold text-gray-900">정답!</h1>
+    <div class="mb-1 text-4xl font-bold text-blue-600">{$attemptCount}</div>
+    <p class="text-sm text-gray-500">번만에 맞추셨습니다</p>
+  </div>
+
+  <!-- Player Reveal -->
+  {#if $targetPlayer}
+    <div class="flex justify-center mb-6">
+      <div class="text-center">
+        <div class="inline-block relative mb-4">
+          <img 
+            src={$targetPlayer.image_url} 
+            alt={$targetPlayer.name} 
+            class="w-20 h-20 rounded-full shadow-lg"
+          />
+          <div class="flex absolute -top-1 -right-1 justify-center items-center w-6 h-6 bg-green-500 rounded-full">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
           </div>
         </div>
-      </div>
-    {/if}
-    
-    <div class="result-stats">
-      <div class="stat">
-        <div class="stat-number">{$attemptCount}</div>
-        <div class="stat-label">시도 횟수</div>
-      </div>
-      
-      {#if $dailyGameState?.completedAt}
-        <div class="stat">
-          <div class="stat-number">
-            {new Date($dailyGameState.completedAt).toLocaleTimeString('ko-KR')}
-          </div>
-          <div class="stat-label">완료 시간</div>
+        <h2 class="mb-1 text-xl font-semibold text-gray-900">{$targetPlayer.name}</h2>
+        <p class="mb-3 text-gray-600">{$targetPlayer.team} • {$targetPlayer.position}</p>
+        
+        <div class="inline-flex space-x-4 text-sm text-gray-600">
+          <span class="font-medium">.{$targetPlayer.avg.toFixed(3).slice(1)}</span>
+          <span>{$targetPlayer.home_runs}HR</span>
+          <span>{$targetPlayer.rbis}RBI</span>
         </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Actions -->
+  <div class="flex justify-center items-center space-x-8">
+    <button 
+      on:click={shareResult}
+      disabled={isSharing}
+      class="inline-flex items-center px-4 py-2 space-x-2 text-sm font-medium text-white bg-gray-900 rounded-full transition-all duration-200 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+      class:bg-green-600={shareSuccess}
+      class:hover:bg-green-700={shareSuccess}
+    >
+      {#if isSharing}
+        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      {:else if shareSuccess}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+      {:else}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+        </svg>
       {/if}
-    </div>
+      
+      <span>
+        {#if shareSuccess}
+          복사됨!
+        {:else}
+          공유
+        {/if}
+      </span>
+    </button>
     
-    <div class="action-buttons">
-      <button class="share-btn" on:click={shareResult}>
-        📱 결과 공유하기
-      </button>
-    </div>
-    
-    <div class="next-game-info">
-      <h3>다음 게임까지</h3>
-      <div class="countdown">
-        <div class="time-display">
-          {formatTime(timeUntilTomorrow)}
-        </div>
-        <div class="time-label">시간 남음</div>
+    <div class="text-center">
+      <div class="mb-1 text-xs tracking-wide text-gray-400 uppercase">Next Game</div>
+      <div class="font-mono text-lg font-bold tracking-wider text-gray-900">
+        {formatTime(timeUntilTomorrow)}
       </div>
-      <p class="next-game-text">
-        내일 새로운 선수가 기다리고 있습니다! 🎯
-      </p>
     </div>
   </div>
 </div>
-
-<style>
-  .game-complete-container {
-    display: flex;
-    justify-content: center;
-    padding: 2rem;
-    min-height: 60vh;
-  }
-  
-  .result-card {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    max-width: 500px;
-    width: 100%;
-    text-align: center;
-  }
-  
-  .congratulations {
-    font-size: 2rem;
-    color: #059669;
-    margin-bottom: 2rem;
-  }
-  
-  .answer-section {
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: #f8fafc;
-    border-radius: 12px;
-  }
-  
-  .answer-section h3 {
-    margin-bottom: 1rem;
-    color: #1e3a8a;
-  }
-  
-  .player-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    text-align: left;
-  }
-  
-  .player-image {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #e5e7eb;
-  }
-  
-  .player-details h4 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.25rem;
-    color: #1f2937;
-  }
-  
-  .player-details p {
-    margin: 0 0 0.5rem 0;
-    color: #6b7280;
-  }
-  
-  .player-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-  }
-  
-  .player-stats span {
-    background: #e5e7eb;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-  }
-  
-  .result-stats {
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-    margin-bottom: 2rem;
-  }
-  
-  .stat {
-    text-align: center;
-  }
-  
-  .stat-number {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #1e3a8a;
-  }
-  
-  .stat-label {
-    font-size: 0.875rem;
-    color: #6b7280;
-  }
-  
-  .action-buttons {
-    margin-bottom: 2rem;
-  }
-  
-  .share-btn {
-    background: #059669;
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .share-btn:hover {
-    background: #047857;
-  }
-  
-  .next-game-info {
-    border-top: 1px solid #e5e7eb;
-    padding-top: 2rem;
-  }
-  
-  .next-game-info h3 {
-    margin-bottom: 1rem;
-    color: #1e3a8a;
-  }
-  
-  .countdown {
-    margin-bottom: 1rem;
-  }
-  
-  .time-display {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #ea580c;
-    font-family: 'Courier New', monospace;
-  }
-  
-  .time-label {
-    font-size: 0.875rem;
-    color: #6b7280;
-  }
-  
-  .next-game-text {
-    color: #6b7280;
-    font-size: 0.875rem;
-    margin: 0;
-  }
-  
-  @media (max-width: 640px) {
-    .game-complete-container {
-      padding: 1rem;
-    }
-    
-    .result-card {
-      padding: 1.5rem;
-    }
-    
-    .player-info {
-      flex-direction: column;
-      text-align: center;
-    }
-    
-    .player-details {
-      text-align: center;
-    }
-    
-    .result-stats {
-      flex-direction: column;
-      gap: 1rem;
-    }
-  }
-</style>

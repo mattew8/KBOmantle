@@ -4,7 +4,7 @@
 
 <div class="mt-12 space-y-4 sm:mt-24">
   <details class="overflow-hidden rounded-lg border border-gray-200 group dark:border-slate-600" open tabindex=-1>
-    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation">
+    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation summary-no-blue">
       <h5 class="text-sm font-medium text-gray-900 sm:text-base dark:text-slate-200">{CONFIG.SITE_NAME}이 뭔가요?</h5>
       <svg class="flex-shrink-0 ml-1.5 w-4 h-4 transition duration-300 sm:w-5 sm:h-5 group-open:-rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -20,7 +20,7 @@
   </details>
 
   <details class="overflow-hidden rounded-lg border border-gray-200 group dark:border-slate-600" tabindex=-1>
-    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation">
+    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation summary-no-blue">
       <h5 class="text-sm font-medium text-gray-900 sm:text-base dark:text-slate-200">어떤 선수들이 포함되어 있나요?</h5>
       <svg class="flex-shrink-0 ml-1.5 w-4 h-4 transition duration-300 sm:w-5 sm:h-5 group-open:-rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -36,7 +36,7 @@
   </details>
 
   <details class="overflow-hidden rounded-lg border border-gray-200 group dark:border-slate-600" tabindex=-1>
-    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation">
+    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation summary-no-blue">
       <h5 class="text-sm font-medium text-gray-900 sm:text-base dark:text-slate-200">선수의 상세 정보를 볼 수 있나요?</h5>
       <svg class="flex-shrink-0 ml-1.5 w-4 h-4 transition duration-300 sm:w-5 sm:h-5 group-open:-rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -50,7 +50,7 @@
   </details>
 
   <details class="overflow-hidden rounded-lg border border-gray-200 group dark:border-slate-600" tabindex=-1>
-    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation">
+    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation summary-no-blue">
       <h5 class="text-sm font-medium text-gray-900 sm:text-base dark:text-slate-200">유사도는 어떻게 계산하나요?</h5>
       <svg class="flex-shrink-0 ml-1.5 w-4 h-4 transition duration-300 sm:w-5 sm:h-5 group-open:-rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -65,7 +65,7 @@
   </details>
 
   <details class="overflow-hidden rounded-lg border border-gray-200 group dark:border-slate-600" tabindex=-1>
-    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation">
+    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation summary-no-blue">
       <h5 class="text-sm font-medium text-gray-900 sm:text-base dark:text-slate-200">하루에 한 번 이상 플레이할 수 있나요?</h5>
       <svg class="flex-shrink-0 ml-1.5 w-4 h-4 transition duration-300 sm:w-5 sm:h-5 group-open:-rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -80,7 +80,7 @@
   </details>
 
   <details class="overflow-hidden rounded-lg border border-gray-200 group dark:border-slate-600" tabindex=-1>
-    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation">
+    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation summary-no-blue">
       <h5 class="text-sm font-medium text-gray-900 sm:text-base dark:text-slate-200">어제의 정답은 뭐였나요?</h5>
       <svg class="flex-shrink-0 ml-1.5 w-4 h-4 transition duration-300 sm:w-5 sm:h-5 group-open:-rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -95,7 +95,7 @@
   </details>
 
   <details class="overflow-hidden rounded-lg border border-gray-200 group dark:border-slate-600" tabindex=-1>
-    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation">
+    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation summary-no-blue">
       <h5 class="text-sm font-medium text-gray-900 sm:text-base dark:text-slate-200">내 추측을 다른 방식으로 정렬할 수 있나요?</h5>
       <svg class="flex-shrink-0 ml-1.5 w-4 h-4 transition duration-300 sm:w-5 sm:h-5 group-open:-rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -110,7 +110,7 @@
   </details>
 
   <details class="overflow-hidden rounded-lg border border-gray-200 group dark:border-slate-600" tabindex=-1>
-    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation">
+    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation summary-no-blue">
       <h5 class="text-sm font-medium text-gray-900 sm:text-base dark:text-slate-200">소스 코드를 확인할 수 있나요?</h5>
       <svg class="flex-shrink-0 ml-1.5 w-4 h-4 transition duration-300 sm:w-5 sm:h-5 group-open:-rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -127,7 +127,7 @@
   </details>
 
   <details class="overflow-hidden rounded-lg border border-gray-200 group dark:border-slate-600" tabindex=-1>
-    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation">
+    <summary class="flex justify-between items-center p-3 bg-gray-100 transition-colors cursor-pointer sm:p-4 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 touch-manipulation summary-no-blue">
       <h5 class="text-sm font-medium text-gray-900 sm:text-base dark:text-slate-200">다른 질문이나 피드백은 어떻게 보내나요?</h5>
       <svg class="flex-shrink-0 ml-1.5 w-4 h-4 transition duration-300 sm:w-5 sm:h-5 group-open:-rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -153,5 +153,52 @@
   
   summary {
     list-style: none;
+  }
+  
+  .summary-no-blue {
+    background-color: #f3f4f6;
+    color: #111827;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  
+  .summary-no-blue h5 {
+    color: #111827;
+  }
+  
+  .summary-no-blue svg {
+    color: #111827;
+  }
+  
+  .summary-no-blue:focus {
+    outline: none;
+    background-color: #e5e7eb;
+  }
+  
+  .summary-no-blue:active {
+    background-color: #e5e7eb;
+  }
+  
+  .summary-no-blue:hover {
+    background-color: #e5e7eb;
+  }
+  
+  /* Content div styling */
+  details div {
+    background-color: #ffffff;
+    color: #374151;
+  }
+  
+  details div p {
+    color: #374151;
+  }
+  
+  /* Border styling */
+  details {
+    border: 1px solid #e5e7eb;
   }
 </style>

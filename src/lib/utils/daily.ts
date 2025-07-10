@@ -153,17 +153,19 @@ export function isGameCompletedToday(date?: string): boolean {
  * 내일까지 남은 시간 계산 (한국 시간 기준)
  */
 export function getTimeUntilTomorrow(): { hours: number; minutes: number; seconds: number } {
+  // 현재 UTC 시간
   const now = new Date();
-  const kstNow = new Date(now.getTime() + (CONFIG.TIMEZONE_OFFSET * 60 * 60 * 1000));
   
-  // 한국 시간 기준 내일 00:00:00
-  const tomorrow = new Date(kstNow);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
+  // 오늘 한국 시간 자정 (UTC 기준)
+  const todayMidnightKST = new Date();
+  todayMidnightKST.setUTCHours(24 - CONFIG.TIMEZONE_OFFSET, 0, 0, 0); // 한국 자정 = UTC 15:00
   
-  // UTC로 변환해서 차이 계산
-  const tomorrowUTC = new Date(tomorrow.getTime() - (CONFIG.TIMEZONE_OFFSET * 60 * 60 * 1000));
-  const diff = tomorrowUTC.getTime() - now.getTime();
+  // 만약 이미 한국 시간 자정이 지났다면 내일 자정으로
+  if (now.getTime() >= todayMidnightKST.getTime()) {
+    todayMidnightKST.setUTCDate(todayMidnightKST.getUTCDate() + 1);
+  }
+  
+  const diff = todayMidnightKST.getTime() - now.getTime();
   
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
