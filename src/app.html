@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="ko">
   <head>
+    <!-- Google Tag Manager -->
+    <script>
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != "dataLayer" ? "&l=" + l : "";
+        j.async = true;
+        j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, "script", "dataLayer", "GTM-P72ZNTR6");
+    </script>
+    <!-- End Google Tag Manager -->
     <meta charset="utf-8" />
     <link rel="icon" href="%sveltekit.assets%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -15,9 +29,21 @@
       name="description"
       content="오늘의 KBO 야구 선수를 맞춰보세요! 선수 이름을 입력하면 정답과 얼마나 비슷한지 알려줍니다."
     />
+    <meta name="naver-site-verification" content="1f9e31de6585dcee96e3a32bc86c07e6b81ea037" />
+    <meta name="google-site-verification" content="i7vpi25hFJhdaYVbIyoOS_o_L2S65X7ekV8XW8ylaKM" />
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript
+      ><iframe
+        src="https://www.googletagmanager.com/ns.html?id=GTM-P72ZNTR6"
+        height="0"
+        width="0"
+        style="display: none; visibility: hidden"
+      ></iframe
+    ></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <div style="display: contents">%sveltekit.body%</div>
   </body>
 </html>

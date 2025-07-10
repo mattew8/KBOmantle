@@ -47,13 +47,13 @@
   }
 </script>
 
-<div class="py-2 sm:py-4 min-h-screen bg-gray-50">
-  <div class="px-2 sm:px-4 mx-auto max-w-2xl">
-    <header class="mb-4 sm:mb-6 text-center">
-      <h1 class="mb-1 text-2xl sm:text-3xl font-bold text-gray-900">{CONFIG.SITE_NAME}</h1>
+<div class="py-2 min-h-screen bg-gray-50 sm:py-4">
+  <div class="px-2 mx-auto max-w-2xl sm:px-4">
+    <header class="mb-4 text-center sm:mb-6">
+      <h1 class="mb-1 text-2xl font-bold text-gray-900 sm:text-3xl">{CONFIG.SITE_NAME}</h1>
       
       {#if gameInitialized}
-        <div class="mt-2 sm:mt-3 text-xs text-gray-500 px-2">
+        <div class="px-2 mt-2 text-xs text-gray-500 sm:mt-3">
           오늘의 정답: <strong>2025 상반기 타자 (45인)</strong> • {getTodayDateKST()}
         </div>
       {/if}
@@ -78,7 +78,7 @@
         {/if}
         
         {#if error}
-          <div class="p-3 mt-3 mx-2 sm:mx-0 text-center bg-red-50 rounded-lg border border-red-200">
+          <div class="p-3 mx-2 mt-3 text-center bg-red-50 rounded-lg border border-red-200 sm:mx-0">
             <p class="text-sm text-red-700">{error}</p>
           </div>
         {/if}
@@ -94,8 +94,8 @@
     {/if}
   </div>
   
-  <div class="px-4 sm:px-2 py-6 sm:py-10 text-xs text-center text-gray-700 dark:text-slate-400">
-    KBO와 선수 관련 정보는 공개된 데이터를 사용하며, 교육 목적으로만 제공됩니다.<br>
+  <div class="px-4 py-6 text-xs text-center text-gray-700 sm:px-2 sm:py-10 dark:text-slate-400">
+    KBO와 선수 관련 정보는 공개된 데이터를 사용합니다.<br>
     상업적 목적이 아니며, KBO와 관련 구단의 지적재산권을 침해할 의도는 없습니다.
   </div>
 </div>
