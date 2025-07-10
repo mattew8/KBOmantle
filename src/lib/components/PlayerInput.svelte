@@ -72,10 +72,8 @@
   }
 
   function handleKeydown(event: KeyboardEvent) {
-    console.log('핸들키다운')
     if (event.key === 'ArrowDown') {
       event.preventDefault();
-      console.log(selectedIndex,"셀렉인덱")
       if (selectedIndex === -1) {
         selectedIndex = 0;
       } else {
