@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { Player } from '$lib/utils/vector';
-  import { getCachedVector, cosineSimilarity } from '$lib/utils/similarity';
+  import { getCachedVector, calculateVectorSimilarity } from '$lib/utils/similarity';
   import playersData from '$lib/data/players.json';
 
   let allPlayers: Player[] = playersData;
@@ -114,14 +114,14 @@
     // 연결선 그리기 (유사도 기반) - 90% 이상일 때만 연결 (너무 많은 선을 방지)
     for (let i = 0; i < allPlayers.length; i++) {
       for (let j = i + 1; j < allPlayers.length; j++) {
-        const similarity = cosineSimilarity(vectors[i], vectors[j]);
+        const similarity = calculateVectorSimilarity(allPlayers[i], allPlayers[j]);
         
-        if (similarity > 90) {
+        if (similarity > 60) {
           const [x1, y1] = normalizedPoints[i];
           const [x2, y2] = normalizedPoints[j];
           
-          ctx.strokeStyle = `rgba(255, 0, 0, ${(similarity - 90) / 10})`;
-          ctx.lineWidth = ((similarity - 90) / 10) * 2;
+          ctx.strokeStyle = `rgba(255, 0, 0, ${(similarity - 60) / 40})`;
+          ctx.lineWidth = ((similarity - 60) / 40) * 2;
           ctx.beginPath();
           ctx.moveTo(x1, y1);
           ctx.lineTo(x2, y2);
@@ -254,9 +254,9 @@
     
     for (let i = 0; i < allPlayers.length; i++) {
       for (let j = i + 1; j < allPlayers.length; j++) {
-        const similarity = cosineSimilarity(vectors[i], vectors[j]);
+        const similarity = calculateVectorSimilarity(allPlayers[i], allPlayers[j]);
         
-        if (similarity > 90) {
+        if (similarity > 60) {
           const [x1, y1] = normalizedPoints[i];
           const [x2, y2] = normalizedPoints[j];
           
@@ -452,12 +452,12 @@
 <!-- 선 툴팁 -->
 {#if lineTooltip.visible && lineTooltip.player1 && lineTooltip.player2}
   <div 
-    class="fixed z-50 p-4 max-w-sm text-sm bg-white rounded-xl shadow-xl border border-gray-200 pointer-events-none"
+    class="fixed z-50 p-4 max-w-sm text-sm bg-white rounded-xl border border-gray-200 shadow-xl pointer-events-none"
     style="left: {lineTooltip.x + 10}px; top: {lineTooltip.y - 10}px;"
   >
     <!-- 유사도 헤더 -->
     <div class="flex items-center mb-3">
-      <div class="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full mr-3">
+      <div class="flex justify-center items-center mr-3 w-8 h-8 bg-blue-100 rounded-full">
         <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
         </svg>
@@ -469,8 +469,8 @@
     </div>
     
     <!-- 선수 정보 -->
-    <div class="mb-3 p-3 bg-gray-50 rounded-lg">
-      <div class="flex items-center justify-between mb-2">
+    <div class="p-3 mb-3 bg-gray-50 rounded-lg">
+      <div class="flex justify-between items-center mb-2">
         <div class="flex-1 text-center">
           <div class="font-semibold text-gray-900">{lineTooltip.player1.name}</div>
           <div class="text-xs text-gray-500">{lineTooltip.player1.team}</div>
@@ -493,13 +493,13 @@
     <!-- 유사도 설명 -->
     <div class="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
       <div class="flex items-start">
-        <div class="flex-shrink-0 w-4 h-4 mt-0.5 mr-2">
+        <div class="flex-shrink-0 mt-0.5 mr-2 w-4 h-4">
           <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
         </div>
         <div class="flex-1">
-          <div class="text-xs font-medium text-blue-800 mb-1">유사한 이유</div>
+          <div class="mb-1 text-xs font-medium text-blue-800">유사한 이유</div>
           <div class="text-sm text-blue-700">{lineTooltip.explanation}</div>
         </div>
       </div>
@@ -543,9 +543,9 @@
         <div>
           <h3 class="mb-2 text-lg font-semibold text-red-600">🔗 빨간 연결선의 의미</h3>
           <ul class="ml-4 space-y-1">
-            <li><strong>90% 이상 유사도:</strong> 거의 동일한 스탯과 특성</li>
+            <li><strong>60% 이상 유사도:</strong> 상당히 유사한 스탯과 특성을 가진 선수들</li>
             <li><strong>연결선이 많은 선수:</strong> 평균적이고 밸런스가 좋은 선수</li>
-            <li><strong>연결선이 적은 선수:</strong> 독특하고 특화된 스타일의 선수</li>
+            <li><strong>연결선이 없는 선수:</strong> 독특하고 특화된 스타일의 선수 (게임 최고 난이도!)</li>
           </ul>
         </div>
 
@@ -566,7 +566,7 @@
             <ul class="ml-4 space-y-1">
               <li>정답 선수가 <strong>중앙</strong>에 있으면: 평균적 스탯의 선수들이 높은 유사도</li>
               <li>정답 선수가 <strong>외곽</strong>에 있으면: 비슷한 특화 스타일 선수들만 높은 유사도</li>
-              <li><strong>같은 클러스터</strong> 내 선수들: 60-80% 유사도 예상</li>
+              <li><strong>같은 클러스터</strong> 내 선수들: 40-70% 유사도 예상</li>
             </ul>
           </div>
         </div>
