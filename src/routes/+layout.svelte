@@ -1,6 +1,9 @@
 <script>
   import '../app.css';
   import { CONFIG } from '$lib/config';
+  import { injectAnalytics } from '@vercel/analytics/sveltekit';
+
+  injectAnalytics();
 </script>
 
 <svelte:head>
