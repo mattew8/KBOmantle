@@ -1,14 +1,14 @@
 import { writable, derived } from "svelte/store";
 import type { Player } from "../utils/vector.js";
-import { 
-  getTodayGameState, 
-  saveTodayGameState, 
+import {
+  getTodayGameState,
+  saveTodayGameState,
   createNewGameState,
   addGuessToGameState,
   getTodayPlayer,
   isGameCompletedToday,
   cleanOldGameStates,
-  type DailyGameState
+  type DailyGameState,
 } from "../utils/daily.js";
 
 export interface Guess {
@@ -17,6 +17,9 @@ export interface Guess {
   timestamp: number;
 }
 
+export type GameMode = "2025" | "career";
+
+export const gameMode = writable<GameMode>("2025");
 export const targetPlayer = writable<Player | null>(null);
 export const guesses = writable<Guess[]>([]);
 export const currentInput = writable<string>("");
@@ -38,9 +41,13 @@ export const hasGuessedPlayer = derived(guesses, ($guesses) => {
   return (playerId: string) => $guesses.some((g) => g.player.id === playerId);
 });
 
-export function addGuess(player: Player, similarity: number, targetPlayer: Player | null = null) {
+export function addGuess(
+  player: Player,
+  similarity: number,
+  targetPlayer: Player | null = null
+) {
   const roundedSimilarity = Math.round(similarity * 100) / 100;
-  
+
   guesses.update((current) => [
     ...current,
     {
@@ -53,16 +60,16 @@ export function addGuess(player: Player, similarity: number, targetPlayer: Playe
   // 데일리 게임 상태 업데이트
   dailyGameState.update((currentState) => {
     if (!currentState) return null;
-    
+
     const newState = addGuessToGameState(currentState, {
       playerId: player.id,
       playerName: player.name,
-      similarity: roundedSimilarity
+      similarity: roundedSimilarity,
     });
-    
+
     // localStorage에 저장
     saveTodayGameState(newState);
-    
+
     return newState;
   });
 
@@ -81,6 +88,11 @@ export function resetGame() {
   dailyGameState.set(null);
 }
 
+export function setGameMode(mode: GameMode) {
+  gameMode.set(mode);
+  // 모드 변경 시 게임 상태 초기화
+  resetGame();
+}
 
 /**
  * 데일리 게임 초기화 - 오늘의 게임 상태 로드 또는 새로 생성
@@ -88,13 +100,13 @@ export function resetGame() {
 export function initializeDailyGame(allPlayers: Player[]): boolean {
   // 오래된 게임 상태 정리
   cleanOldGameStates();
-  
+
   // 오늘의 선수 선택
   const todayPlayer = getTodayPlayer(allPlayers);
-  
+
   // 기존 게임 상태 확인
   const existingState = getTodayGameState();
-  
+
   if (existingState) {
     // 기존 게임 상태 복원
     restoreGameFromState(existingState, todayPlayer, allPlayers);
@@ -104,7 +116,7 @@ export function initializeDailyGame(allPlayers: Player[]): boolean {
     const newState = createNewGameState(todayPlayer);
     dailyGameState.set(newState);
     saveTodayGameState(newState);
-    
+
     targetPlayer.set(todayPlayer);
     gameStarted.set(true);
     return false;
@@ -114,21 +126,27 @@ export function initializeDailyGame(allPlayers: Player[]): boolean {
 /**
  * 저장된 게임 상태에서 게임 복원
  */
-function restoreGameFromState(state: DailyGameState, todayPlayer: Player, allPlayers: Player[]) {
+function restoreGameFromState(
+  state: DailyGameState,
+  todayPlayer: Player,
+  allPlayers: Player[]
+) {
   // 플레이어 객체 복원
-  const restoredGuesses: Guess[] = state.guesses.map(guess => {
-    const player = allPlayers.find(p => p.id === guess.playerId);
-    if (!player) {
-      console.warn(`Player not found: ${guess.playerId}`);
-      return null;
-    }
-    return {
-      player,
-      similarity: guess.similarity,
-      timestamp: guess.timestamp
-    };
-  }).filter(Boolean) as Guess[];
-  
+  const restoredGuesses: Guess[] = state.guesses
+    .map((guess) => {
+      const player = allPlayers.find((p) => p.id === guess.playerId);
+      if (!player) {
+        console.warn(`Player not found: ${guess.playerId}`);
+        return null;
+      }
+      return {
+        player,
+        similarity: guess.similarity,
+        timestamp: guess.timestamp,
+      };
+    })
+    .filter(Boolean) as Guess[];
+
   // 스토어 상태 복원
   dailyGameState.set(state);
   targetPlayer.set(todayPlayer);

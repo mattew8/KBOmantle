@@ -1,8 +1,8 @@
-import { playerToVector, isPitcher, type Player } from './vector.js';
+import { playerToVector, isPitcher, type Player } from "./vector.js";
 
 export function cosineSimilarity(vecA: number[], vecB: number[]): number {
   if (vecA.length !== vecB.length) {
-    console.log('벡터 길이 불일치:', vecA.length, 'vs', vecB.length);
+    console.log("벡터 길이 불일치:", vecA.length, "vs", vecB.length);
     return 0;
   }
 
@@ -21,37 +21,51 @@ export function cosineSimilarity(vecA: number[], vecB: number[]): number {
   return Math.max(0, Math.min(100, ((similarity + 1) / 2) * 100));
 }
 
-export function calculateVectorSimilarity(guessPlayer: Player, targetPlayer: Player, mode: '2025' | 'career' = '2025'): number {
+export function calculateVectorSimilarity(
+  guessPlayer: Player,
+  targetPlayer: Player,
+  mode: "2025" | "career" = "2025"
+): number {
   // 투수/타자 타입 확인
   const isGuessPitcher = isPitcher(guessPlayer);
   const isTargetPitcher = isPitcher(targetPlayer);
-  
+
   // 디버깅을 위해 콘솔에 벡터 정보 출력
-  console.log('=== 유사도 디버깅 ===');
-  console.log('추측 선수:', guessPlayer.name, guessPlayer.id, isGuessPitcher ? '(투수)' : '(타자)');
-  console.log('정답 선수:', targetPlayer.name, targetPlayer.id, isTargetPitcher ? '(투수)' : '(타자)');
-  
+  console.log("=== 유사도 디버깅 ===");
+  console.log(
+    "추측 선수:",
+    guessPlayer.name,
+    guessPlayer.id,
+    isGuessPitcher ? "(투수)" : "(타자)"
+  );
+  console.log(
+    "정답 선수:",
+    targetPlayer.name,
+    targetPlayer.id,
+    isTargetPitcher ? "(투수)" : "(타자)"
+  );
+
   // 서로 다른 타입일 때는 팀만 비교
   if (isGuessPitcher !== isTargetPitcher) {
-    console.log('서로 다른 타입 - 팀 비교만 실행');
+    console.log("서로 다른 타입 - 팀 비교만 실행");
     const teamSimilarity = guessPlayer.team === targetPlayer.team ? 15 : 0;
-    console.log('팀 유사도:', teamSimilarity);
+    console.log("팀 유사도:", teamSimilarity);
     return teamSimilarity;
   }
-  
+
   // 같은 타입일 때는 벡터 기반 유사도 계산
   const guessVector = playerToVector(guessPlayer, mode);
   const targetVector = playerToVector(targetPlayer, mode);
-  console.log('벡터 차원:', guessVector.length);
-  console.log('추측 선수 벡터:', guessVector);
-  console.log('정답 선수 벡터:', targetVector);
-  
+  console.log("벡터 차원:", guessVector.length);
+  console.log("추측 선수 벡터:", guessVector);
+  console.log("정답 선수 벡터:", targetVector);
+
   const rawSimilarity = cosineSimilarity(guessVector, targetVector);
-  console.log('원본 코사인 유사도:', rawSimilarity);
-  
+  console.log("원본 코사인 유사도:", rawSimilarity);
+
   // 🎆 순수 벡터 기반 비선형 변환 - 자연스러운 분포
   let adjustedSimilarity;
-  
+
   if (rawSimilarity > 99) {
     // 99%+ = “정답에 근접” 🔥 (99-100 → 90-100)
     adjustedSimilarity = 90 + (rawSimilarity - 99) * (10 / 1);
@@ -86,13 +100,13 @@ export function calculateVectorSimilarity(guessPlayer: Player, targetPlayer: Pla
     // 0-40% = “얼음” 🧊 (0-40 → 0-0.5)
     adjustedSimilarity = rawSimilarity * (0.5 / 40);
   }
-  
-  console.log('조정된 유사도:', adjustedSimilarity);
-  
+
+  console.log("조정된 유사도:", adjustedSimilarity);
+
   // 소수점 한 자리로 반올림하여 정밀도 차이 최소화
   const roundedSimilarity = Math.round(adjustedSimilarity * 10) / 10;
-  console.log('반올림된 최종 유사도:', roundedSimilarity);
-  
+  console.log("반올림된 최종 유사도:", roundedSimilarity);
+
   return Math.max(0, Math.min(100, roundedSimilarity));
 }
 

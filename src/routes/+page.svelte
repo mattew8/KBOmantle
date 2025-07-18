@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { targetPlayer, gameWon, gameStarted, addGuess, initializeDailyGame } from '../lib/stores/game.js';
+  import { targetPlayer, gameWon, gameStarted, addGuess, initializeDailyGame, gameMode, setGameMode, type GameMode } from '../lib/stores/game.js';
   import { allPlayers } from '../lib/stores/players.js';
   import { calculateVectorSimilarity } from '../lib/utils/similarity.js';
   import { getTodayDateKST } from '../lib/utils/daily.js';
@@ -30,6 +30,12 @@
     }
   }
 
+  function handleModeChange(mode: GameMode) {
+    setGameMode(mode);
+    // 모드 변경 후 게임 재초기화
+    initializeGame();
+  }
+
   async function handleGuess(guessedPlayer: Player) {
     if (!$targetPlayer) return;
     
@@ -37,7 +43,7 @@
     error = '';
     
     try {
-      const similarity = calculateVectorSimilarity(guessedPlayer, $targetPlayer);
+      const similarity = calculateVectorSimilarity(guessedPlayer, $targetPlayer, $gameMode);
       addGuess(guessedPlayer, similarity, $targetPlayer);
     } catch (err) {
       error = err instanceof Error ? err.message : '오류가 발생했습니다.';
@@ -53,8 +59,26 @@
       <h1 class="mb-1 text-2xl font-bold text-gray-900 sm:text-3xl">{CONFIG.SITE_NAME}</h1>
       
       {#if gameInitialized}
+        <!-- 게임 모드 선택 -->
+        <div class="flex justify-center mb-3 sm:mb-4">
+          <div class="inline-flex p-1 bg-gray-100 rounded-lg">
+            <button
+              onclick={() => handleModeChange('2025')}
+              class="px-3 py-1 text-sm font-medium rounded-md transition-colors {$gameMode === '2025' ? 'bg-white text-gray-900 shadow' : 'text-gray-600 hover:text-gray-900'}"
+            >
+              2025년 기록
+            </button>
+            <button
+              onclick={() => handleModeChange('career')}
+              class="px-3 py-1 text-sm font-medium rounded-md transition-colors {$gameMode === 'career' ? 'bg-white text-gray-900 shadow' : 'text-gray-600 hover:text-gray-900'}"
+            >
+              통산 기록
+            </button>
+          </div>
+        </div>
+        
         <div class="px-2 mt-2 text-xs text-gray-500 sm:mt-3">
-          오늘의 정답: <strong>2025 상반기 KBO 선수 (타자 + 투수)</strong> • {getTodayDateKST()}
+          오늘의 정답: <strong>{$gameMode === '2025' ? '2025년' : '통산'} KBO 선수 (타자 + 투수)</strong> • {getTodayDateKST()}
         </div>
       {/if}
     </header>
