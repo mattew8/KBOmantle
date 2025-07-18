@@ -54,7 +54,7 @@
       
       {#if gameInitialized}
         <div class="px-2 mt-2 text-xs text-gray-500 sm:mt-3">
-          오늘의 정답: <strong>2025 상반기 타자 (45인)</strong> • {getTodayDateKST()}
+          오늘의 정답: <strong>2025 상반기 KBO 선수 (타자 + 투수)</strong> • {getTodayDateKST()}
         </div>
       {/if}
     </header>

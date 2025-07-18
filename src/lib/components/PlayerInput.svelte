@@ -19,8 +19,7 @@
   $effect(() => {
     if ($currentInput.length > 0 && showDropdown) {
       const newSuggestions = searchPlayers($currentInput)
-        .filter(p => !$hasGuessedPlayer(p.id))
-        .slice(0, 5);
+        .filter(p => !$hasGuessedPlayer(p.id));
       
       // 새로운 검색 결과가 나왔을 때만 selectedIndex 리셋
       if (JSON.stringify(suggestions) !== JSON.stringify(newSuggestions)) {
@@ -126,7 +125,7 @@
       />
       
       {#if suggestions.length > 0}
-        <div class="overflow-y-auto absolute left-0 top-full z-10 mt-1 w-full max-h-60 bg-white rounded-lg border border-gray-200 shadow-lg">
+        <div class="overflow-y-auto absolute left-0 top-full z-10 mt-1 w-full max-h-96 sm:max-h-none bg-white rounded-lg border border-gray-200 shadow-lg">
           {#each suggestions as player, index}
             <button
               onclick={() => selectPlayer(player)}
@@ -136,8 +135,13 @@
               <div class="flex flex-wrap gap-1 items-center mt-1 text-xs text-gray-600 sm:gap-2">
                 <span class="px-2 py-1 text-xs text-gray-700 bg-gray-100 rounded">{player.team}</span>
                 <span class="hidden sm:inline">{player.position.replace(/\([^)]*\)/g, '').trim()}</span>
-                <span class="text-xs sm:text-xs">타율 {player.avg.toFixed(3)}</span>
-                <span class="text-xs sm:text-xs">{player.home_runs}HR</span>
+                {#if player.type === 'pitcher'}
+                  <span class="text-xs sm:text-xs">ERA {player.era?.toFixed(2) || 'N/A'}</span>
+                  <span class="text-xs sm:text-xs">{player.wins || 0}승</span>
+                {:else}
+                  <span class="text-xs sm:text-xs">타율 {player.avg?.toFixed(3) || 'N/A'}</span>
+                  <span class="text-xs sm:text-xs">{player.home_runs || 0}HR</span>
+                {/if}
               </div>
             </button>
           {/each}
