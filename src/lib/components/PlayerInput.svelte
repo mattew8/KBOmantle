@@ -1,6 +1,6 @@
 <script lang="ts">
   import { allPlayers } from '../stores/players.js';
-  import { currentInput, hasGuessedPlayer } from '../stores/game.js';
+  import { currentInput, hasGuessedPlayer, gameMode } from '../stores/game.js';
   import { searchPlayers } from '../stores/players.js';
   import type { Player } from '../utils/vector.js';
 
@@ -18,7 +18,7 @@
 
   $effect(() => {
     if ($currentInput.length > 0 && showDropdown) {
-      const newSuggestions = searchPlayers($currentInput)
+      const newSuggestions = searchPlayers($currentInput, $gameMode)
         .filter(p => !$hasGuessedPlayer(p.id));
       
       // 새로운 검색 결과가 나왔을 때만 selectedIndex 리셋
@@ -125,7 +125,7 @@
       />
       
       {#if suggestions.length > 0}
-        <div class="overflow-y-auto absolute left-0 top-full z-10 mt-1 w-full max-h-96 sm:max-h-none bg-white rounded-lg border border-gray-200 shadow-lg">
+        <div class="overflow-y-auto absolute left-0 top-full z-10 mt-1 w-full max-h-60 bg-white rounded-lg border border-gray-200 shadow-lg">
           {#each suggestions as player, index}
             <button
               onclick={() => selectPlayer(player)}
@@ -134,13 +134,13 @@
               <div class="text-sm font-medium text-gray-900">{player.name}</div>
               <div class="flex flex-wrap gap-1 items-center mt-1 text-xs text-gray-600 sm:gap-2">
                 <span class="px-2 py-1 text-xs text-gray-700 bg-gray-100 rounded">{player.team}</span>
-                <span class="hidden sm:inline">{player.position.replace(/\([^)]*\)/g, '').trim()}</span>
+                <span class="hidden sm:inline">{player.type === 'pitcher' ? '투수' : '타자'}</span>
                 {#if player.type === 'pitcher'}
                   <span class="text-xs sm:text-xs">ERA {player.era?.toFixed(2) || 'N/A'}</span>
                   <span class="text-xs sm:text-xs">{player.wins || 0}승</span>
                 {:else}
-                  <span class="text-xs sm:text-xs">타율 {player.avg?.toFixed(3) || 'N/A'}</span>
-                  <span class="text-xs sm:text-xs">{player.home_runs || 0}HR</span>
+                  <span class="text-xs sm:text-xs">타율 {player.타율?.toFixed(3) || 'N/A'}</span>
+                  <span class="text-xs sm:text-xs">{player.홈런 || 0}HR</span>
                 {/if}
               </div>
             </button>

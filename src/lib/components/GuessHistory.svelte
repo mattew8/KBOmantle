@@ -57,12 +57,6 @@
         const result = a.similarity - b.similarity;
         return sortDirection === 'asc' ? result : -result;
       });
-    } else if (sortKey === 'rank') {
-      // 순위 순
-      sorted.sort((a, b) => {
-        const result = a.player.rank - b.player.rank;
-        return sortDirection === 'asc' ? result : -result;
-      });
     }
     
     return sorted;
@@ -134,14 +128,14 @@
     <!-- 테이블 헤더 -->
     <div class="overflow-hidden bg-white rounded-lg border border-gray-200">
       <div class="bg-gray-50 border-b border-gray-200">
-        <div class="grid grid-cols-12 gap-2 sm:gap-4 px-2 sm:px-4 py-3 text-xs font-medium tracking-wider text-gray-700 uppercase">
+        <div class="grid grid-cols-12 gap-2 px-2 py-3 text-xs font-medium tracking-wider text-gray-700 uppercase sm:gap-4 sm:px-4">
           <div class="col-span-1">
             <button 
               onclick={() => handleSort('input')}
               class="flex gap-1 items-center transition-colors hover:text-gray-900"
             >
               #
-              <span class="text-xs hidden sm:inline">{getSortIcon('input')}</span>
+              <span class="hidden text-xs sm:inline">{getSortIcon('input')}</span>
             </button>
           </div>
           <div class="col-span-5 sm:col-span-5">
@@ -150,7 +144,7 @@
               class="flex gap-1 items-center transition-colors hover:text-gray-900"
             >
               이름
-              <span class="text-xs hidden sm:inline">{getSortIcon('name')}</span>
+              <span class="hidden text-xs sm:inline">{getSortIcon('name')}</span>
             </button>
           </div>
           <div class="col-span-3">
@@ -159,7 +153,7 @@
               class="flex gap-1 items-center transition-colors hover:text-gray-900"
             >
               유사도
-              <span class="text-xs hidden sm:inline">{getSortIcon('similarity')}</span>
+              <span class="hidden text-xs sm:inline">{getSortIcon('similarity')}</span>
             </button>
           </div>
           <div class="col-span-3">
@@ -168,7 +162,7 @@
               class="flex gap-1 items-center transition-colors hover:text-gray-900"
             >
               순위
-              <span class="text-xs hidden sm:inline">{getSortIcon('rank')}</span>
+              <span class="hidden text-xs sm:inline">{getSortIcon('rank')}</span>
             </button>
           </div>
         </div>
@@ -182,30 +176,30 @@
             class="w-full text-left transition-colors hover:bg-gray-50 {expandedPlayerId === guess.player.id ? 'bg-blue-50' : ''}"
             onclick={() => handleRowClick(guess.player.id)}
           >
-            <div class="grid grid-cols-12 gap-2 sm:gap-4 px-2 sm:px-4 py-3">
+            <div class="grid grid-cols-12 gap-2 px-2 py-3 sm:gap-4 sm:px-4">
               <!-- 입력 순서 -->
               <div class="flex col-span-1 items-center">
-                <span class="text-xs sm:text-sm text-gray-500">{$guesses.findIndex(g => g.timestamp === guess.timestamp) + 1}</span>
+                <span class="text-xs text-gray-500 sm:text-sm">{$guesses.findIndex(g => g.timestamp === guess.timestamp) + 1}</span>
               </div>
               
               <!-- 선수 (이미지 + 이름) -->
-              <div class="flex col-span-5 gap-2 sm:gap-3 items-center">
+              <div class="flex col-span-5 gap-2 items-center sm:gap-3">
                 <img 
                   src={guess.player.image_url} 
                   alt={guess.player.name}
-                  class="object-cover flex-shrink-0 w-8 h-10 sm:w-10 sm:h-12 rounded border border-gray-200"
+                  class="object-cover flex-shrink-0 w-8 h-10 rounded border border-gray-200 sm:w-10 sm:h-12"
                   loading="lazy"
                   onerror={(e) => {
                     (e.currentTarget as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0MCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQ4IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMCAyNEMyNS41MjI4IDI0IDMwIDE5LjUyMjggMzAgMTRDMzAgOC40NzcyIDI1LjUyMjggNCAyMCA0QzE0LjQ3NzIgNCA5IDguNDc3MiA5IDE0QzkgMTkuNTIyOCAxNC40NzcyIDI0IDIwIDI0WiIgZmlsbD0iI0QxRDVEQiIvPgo8cGF0aCBkPSJNMTIgMzRIMjhMMjYgNDVINEwxMiAzNFoiIGZpbGw9IiNEMUQ1REIiLz4KPC9zdmc+Cg==';
                   }}
                 />
                 <div class="flex-1 min-w-0">
-                  <div class="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                  <div class="text-xs font-medium text-gray-900 truncate sm:text-sm">
                     {guess.player.name}
                   </div>
                   <div class="text-xs text-gray-500">
                     <span class="sm:hidden">{guess.player.team}</span>
-                    <span class="hidden sm:inline">{guess.player.team} • {guess.player.position.replace(/\([^)]*\)/g, '').trim()}</span>
+                    <span class="hidden sm:inline">{guess.player.team} • {guess.player.type === 'pitcher' ? '투수' : '타자'}</span>
                   </div>
                 </div>
                 <svg 
@@ -226,7 +220,7 @@
                       {guess.similarity.toFixed(1)}%
                     </span>
                   </div>
-                  <div class="w-full h-1.5 sm:h-2 bg-gray-200 rounded-full">
+                  <div class="w-full h-1.5 bg-gray-200 rounded-full sm:h-2">
                     <div 
                       class="h-1.5 sm:h-2 {getSimilarityBarColor(guess.similarity)} rounded-full transition-all duration-500"
                       style="width: {guess.similarity}%"
@@ -234,38 +228,31 @@
                   </div>
                 </div>
               </div>
-              
-              <!-- 순위 -->
-              <div class="flex col-span-3 items-center">
-                <div class="text-xs sm:text-sm text-gray-900">
-                  #{guess.player.rank}
-                </div>
-              </div>
             </div>
           </button>
 
           <!-- 선수 세부 정보 드롭다운 -->
           {#if expandedPlayerId === guess.player.id}
-            <div class="px-3 sm:px-4 py-3 sm:py-4 bg-white border-t border-gray-200 animate-slideDown">
+            <div class="px-3 py-3 bg-white border-t border-gray-200 sm:px-4 sm:py-4 animate-slideDown">
               <div class="max-w-2xl">
                 <!-- 선수 헤더 -->
                 <div class="flex gap-3 items-center mb-3">
                   <img 
                     src={guess.player.image_url} 
                     alt={guess.player.name}
-                    class="object-cover w-10 h-12 sm:w-12 sm:h-14 rounded border border-gray-200"
+                    class="object-cover w-10 h-12 rounded border border-gray-200 sm:w-12 sm:h-14"
                     onerror={(e) => {
                       (e.currentTarget as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNTYiIHZpZXdCb3g9IjAgMCA0OCA1NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjU2IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yNCAyOEMzMC42MjMyIDI4IDM2IDE5LjczMiAzNiAxNEMzNiA4LjI2OCAzMC42MjMyIDQgMjQgNEMxNy4zNzY4IDQgMTIgOC4yNjggMTIgMTRDMTIgMTkuNzMyIDE3LjM3NjggMjggMjQgMjhaIiBmaWxsPSIjRDFENURCIi8+CjxwYXRoIGQ9Ik0xMiAzNkgzNkwzNCA0OEg2TDEyIDM2WiIgZmlsbD0iI0QxRDVEQiIvPgo8L3N2Zz4K';
                     }}
                   />
                   <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-gray-900 text-sm sm:text-base">{guess.player.name}</h3>
+                    <h3 class="text-sm font-semibold text-gray-900 sm:text-base">{guess.player.name}</h3>
                     <div class="flex flex-wrap gap-1 items-center mt-1">
                       <span class="px-2 py-0.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md">
                         {guess.player.team}
                       </span>
                       <span class="px-2 py-0.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md">
-                        {guess.player.position.replace(/\([^)]*\)/g, '').trim()}
+                        {guess.player.type === 'pitcher' ? '투수' : '타자'}
                       </span>
                     </div>
                   </div>
@@ -275,49 +262,51 @@
                 <div class="grid grid-cols-2 gap-2 mb-3">
                   <div class="px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
                     <div class="text-xs text-gray-500">생년월일</div>
-                    <div class="font-medium text-gray-900 text-sm">{guess.player.birth_date}</div>
+                    <div class="text-sm font-medium text-gray-900">{guess.player.birth_date}</div>
                   </div>
                   <div class="px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
-                    <div class="text-xs text-gray-500">순위</div>
-                    <div class="font-medium text-gray-900 text-sm">#{guess.player.rank}</div>
+                    <div class="text-xs text-gray-500">타입</div>
+                    <div class="text-sm font-medium text-gray-900">{guess.player.type === 'pitcher' ? '투수' : '타자'}</div>
                   </div>
                 </div>
 
                 <!-- 스탯 정보 -->
                 <div class="grid grid-cols-2 gap-2 lg:grid-cols-4">
-                  {#if guess.player.avg !== undefined}
-                    <div class="px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
-                      <div class="text-xs text-gray-500">타율</div>
-                      <div class="font-semibold text-gray-900 text-sm">{guess.player.avg.toFixed(3)}</div>
-                    </div>
+                  {#if guess.player.type === 'batter'}
+                    {#if guess.player.타율 !== undefined}
+                      <div class="px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
+                        <div class="text-xs text-gray-500">타율</div>
+                        <div class="text-sm font-semibold text-gray-900">{guess.player.타율.toFixed(3)}</div>
+                      </div>
+                    {/if}
+                    
+                    {#if guess.player.홈런 !== undefined}
+                      <div class="px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
+                        <div class="text-xs text-gray-500">홈런</div>
+                        <div class="text-sm font-semibold text-gray-900">{guess.player.홈런}</div>
+                      </div>
+                    {/if}
+                    
+                    {#if guess.player.타점 !== undefined}
+                      <div class="px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
+                        <div class="text-xs text-gray-500">타점</div>
+                        <div class="text-sm font-semibold text-gray-900">{guess.player.타점}</div>
+                      </div>
+                    {/if}
                   {/if}
                   
-                  {#if guess.player.home_runs !== undefined}
-                    <div class="px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
-                      <div class="text-xs text-gray-500">홈런</div>
-                      <div class="font-semibold text-gray-900 text-sm">{guess.player.home_runs}</div>
-                    </div>
-                  {/if}
-                  
-                  {#if guess.player.rbis !== undefined}
-                    <div class="px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
-                      <div class="text-xs text-gray-500">타점</div>
-                      <div class="font-semibold text-gray-900 text-sm">{guess.player.rbis}</div>
-                    </div>
-                  {/if}
-                  
-                  {#if guess.player.ops !== undefined}
+                  {#if guess.player.type === 'batter' && guess.player.출루율 !== undefined && guess.player.장타율 !== undefined}
                     <div class="px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
                       <div class="text-xs text-gray-500">OPS</div>
-                      <div class="font-semibold text-gray-900 text-sm">{guess.player.ops.toFixed(3)}</div>
+                      <div class="text-sm font-semibold text-gray-900">{(guess.player.출루율 + guess.player.장타율).toFixed(3)}</div>
                     </div>
                   {/if}
                 </div>
 
                 <!-- 세부 기록 토글 버튼 -->
-                <div class="mt-4 pt-3 border-t border-gray-200">
+                <div class="pt-3 mt-4 border-t border-gray-200">
                   <button 
-                    class="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                    class="flex gap-2 items-center text-sm text-blue-600 transition-colors hover:text-blue-800"
                     onclick={() => toggleDetailedStats(guess.player.id)}
                   >
                     <span>세부 기록</span>
@@ -333,8 +322,8 @@
 
                   <!-- 세부 기록 표시 -->
                   {#if showDetailedStats[guess.player.id]}
-                    <div class="mt-3 p-3 bg-gray-50 rounded-md border border-gray-200">
-                      <h4 class="text-sm font-medium text-gray-900 mb-2">전체 기록</h4>
+                    <div class="p-3 mt-3 bg-gray-50 rounded-md border border-gray-200">
+                      <h4 class="mb-2 text-sm font-medium text-gray-900">전체 기록</h4>
                       <div class="grid grid-cols-2 gap-2 text-xs">
                         {#each Object.entries(guess.player) as [key, value]}
                           {#if key !== 'id' && key !== 'image_url' && value !== undefined && value !== null && value !== ''}

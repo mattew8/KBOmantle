@@ -136,13 +136,13 @@
           </div>
         </div>
         <h2 class="mb-1 text-xl font-semibold text-gray-900">{$targetPlayer.name}</h2>
-        <p class="mb-3 text-gray-600">{$targetPlayer.team} • {$targetPlayer.position}</p>
+        <p class="mb-3 text-gray-600">{$targetPlayer.team}</p>
         
-        <div class="inline-flex space-x-4 text-sm text-gray-600">
-          <span class="font-medium">.{$targetPlayer.avg.toFixed(3).slice(1)}</span>
-          <span>{$targetPlayer.home_runs}HR</span>
-          <span>{$targetPlayer.rbis}RBI</span>
-        </div>
+        <!-- <div class="inline-flex space-x-4 text-sm text-gray-600">
+          <span class="font-medium">.{$targetPlayer.타율?.toFixed(3).slice(1) || 'N/A'}</span>
+          <span>{$targetPlayer.홈런 || 0}HR</span>
+          <span>{$targetPlayer.타점 || 0}RBI</span>
+        </div> -->
       </div>
     </div>
   {/if}
