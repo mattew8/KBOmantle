@@ -1,4 +1,4 @@
-import { playerToVector, type Player } from './vector.js';
+import { playerToVector, isPitcher, type Player } from './vector.js';
 
 export function cosineSimilarity(vecA: number[], vecB: number[]): number {
   if (vecA.length !== vecB.length) return 0;
@@ -19,13 +19,26 @@ export function cosineSimilarity(vecA: number[], vecB: number[]): number {
 }
 
 export function calculateVectorSimilarity(guessPlayer: Player, targetPlayer: Player): number {
-  const guessVector = playerToVector(guessPlayer);
-  const targetVector = playerToVector(targetPlayer);
-
+  // 투수/타자 타입 확인
+  const isGuessPitcher = isPitcher(guessPlayer);
+  const isTargetPitcher = isPitcher(targetPlayer);
+  
   // 디버깅을 위해 콘솔에 벡터 정보 출력
   console.log('=== 유사도 디버깅 ===');
-  console.log('추측 선수:', guessPlayer.name, guessPlayer.id);
-  console.log('정답 선수:', targetPlayer.name, targetPlayer.id);
+  console.log('추측 선수:', guessPlayer.name, guessPlayer.id, isGuessPitcher ? '(투수)' : '(타자)');
+  console.log('정답 선수:', targetPlayer.name, targetPlayer.id, isTargetPitcher ? '(투수)' : '(타자)');
+  
+  // 서로 다른 타입일 때는 팀만 비교
+  if (isGuessPitcher !== isTargetPitcher) {
+    console.log('서로 다른 타입 - 팀 비교만 실행');
+    const teamSimilarity = guessPlayer.team === targetPlayer.team ? 15 : 0;
+    console.log('팀 유사도:', teamSimilarity);
+    return teamSimilarity;
+  }
+  
+  // 같은 타입일 때는 벡터 기반 유사도 계산
+  const guessVector = playerToVector(guessPlayer);
+  const targetVector = playerToVector(targetPlayer);
   console.log('벡터 차원:', guessVector.length);
   
   const rawSimilarity = cosineSimilarity(guessVector, targetVector);

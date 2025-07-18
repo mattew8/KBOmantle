@@ -1,13 +1,24 @@
 import { normalize, TEAM_CODES } from "./normalize.js";
 
-export interface Player {
+export interface BasePlayer {
   id: string;
   player_id: string;
   rank: number;
   name: string;
   team: string;
-  avg: number;
+  position: string;
+  birth_date: string;
+  height_weight: string;
+  image_url: string;
   games: number;
+  walks: number;
+  hit_by_pitch: number;
+  strikeouts: number;
+}
+
+export interface Batter extends BasePlayer {
+  type: 'batter';
+  avg: number;
   plate_appearances: number;
   at_bats: number;
   runs: number;
@@ -19,10 +30,6 @@ export interface Player {
   rbis: number;
   sacrifice_bunts: number;
   sacrifice_flies: number;
-  walks: number;
-  intentional_walks: number;
-  hit_by_pitch: number;
-  strikeouts: number;
   ground_into_double_play: number;
   slugging_percentage: number;
   on_base_percentage: number;
@@ -40,11 +47,26 @@ export interface Player {
   isolated_power: number;
   extra_runs: number;
   gpa: number;
-  position: string;
-  birth_date: string;
-  height_weight: string;
-  image_url: string;
 }
+
+export interface Pitcher extends BasePlayer {
+  type: 'pitcher';
+  era: number;
+  wins: number;
+  losses: number;
+  saves: number;
+  holds: number;
+  win_percentage: number;
+  innings_pitched: number;
+  hits_allowed: number;
+  home_runs_allowed: number;
+  runs_allowed: number;
+  earned_runs: number;
+  whip: number;
+  throw_hand?: string;
+}
+
+export type Player = Batter | Pitcher;
 
 export interface BatterStats {
   avg: number;
@@ -62,7 +84,20 @@ export interface PitcherStats {
   whip: number;
 }
 
-export function createBatterVector(player: Player): number[] {
+// 타입 가드 함수들
+export function isPitcher(player: Player): player is Pitcher {
+  return player.type === 'pitcher';
+}
+
+export function isBatter(player: Player): player is Batter {
+  return player.type === 'batter';
+}
+
+export function getPlayerType(player: Player): 'batter' | 'pitcher' {
+  return player.type;
+}
+
+export function createBatterVector(player: Batter): number[] {
   // 나이 계산 (생년월일 → 나이)
   const calculateAge = (birthDate: string): number => {
     const match = birthDate.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
@@ -145,12 +180,78 @@ export function createBatterVector(player: Player): number[] {
   return [...statVector, ...teamOneHot, ...positionOneHot];
 }
 
-// 현재 데이터가 타자 전용이므로 투수 벡터는 임시로 빈 배열 반환
-export function createPitcherVector(player: Player): number[] {
-  return [];
+export function createPitcherVector(player: Pitcher): number[] {
+  // 나이 계산 (생년월일 → 나이)
+  const calculateAge = (birthDate: string): number => {
+    const match = birthDate.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+    if (!match) return 25; // 기본값
+
+    const [, year, month, day] = match;
+    const birth = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+
+    if (
+      today.getMonth() < birth.getMonth() ||
+      (today.getMonth() === birth.getMonth() &&
+        today.getDate() < birth.getDate())
+    ) {
+      age--;
+    }
+    return age;
+  };
+  const age = calculateAge(player.birth_date);
+
+  // 🎯 원핫인코딩 - 팀 벡터 (10개 팀) - 포케맨틀 스타일 가중치
+  const teamOneHot = new Array(10).fill(0);
+  const teamIndex = Object.keys(TEAM_CODES).indexOf(player.team);
+  if (teamIndex !== -1) teamOneHot[teamIndex] = 4; // 팀 일치시 중간 유사도 기여
+
+  // 🎯 원핫인코딩 - 포지션 벡터 (투수는 단일 포지션)
+  const positionOneHot = new Array(3).fill(0);
+  positionOneHot[0] = 5; // 투수 포지션
+
+  // 🎯 순수 스탯 벡터 - 투수 특화
+  const statVector = [
+    // 🔥 핵심 투수 능력 (높은 가중치)
+    // ERA는 낮을수록 좋으므로 역정규화 후 높은 가중치
+    normalize(6.0 - player.era, 0, 4.5) * 10, // ERA (역정규화, 최고 가중치)
+    normalize(player.whip, 2.0, 0.8) * 8, // WHIP (역정규화, 높은 가중치)
+    normalize(player.wins, 0, 20) * 7, // 승수
+    normalize(player.strikeouts, 50, 250) * 8, // 탈삼진 (높은 가중치)
+    normalize(player.innings_pitched, 50, 250) * 7, // 이닝
+
+    // ⚡ 추가 성과 지표
+    normalize(player.win_percentage, 0.2, 0.8) * 6, // 승률
+    normalize(player.saves, 0, 30) * 5, // 세이브 (마무리 투수)
+    normalize(player.holds, 0, 25) * 4, // 홀드 (중간 투수)
+    
+    // 💪 피안타 및 실점 관련 (낮을수록 좋음)
+    normalize(300 - player.hits_allowed, 0, 200) * 5, // 피안타 (역정규화)
+    normalize(player.runs_allowed, 100, 20) * 4, // 실점 (역정규화)
+    normalize(player.earned_runs, 80, 15) * 4, // 자책점 (역정규화)
+    normalize(player.home_runs_allowed, 20, 0) * 5, // 피홈런 (역정규화)
+    
+    // 🧠 제구력 관련
+    normalize(player.walks, 60, 10) * 5, // 볼넷 (역정규화)
+    normalize(player.hit_by_pitch, 10, 0) * 3, // 몸에 맞는 볼 (역정규화)
+    
+    // 📈 활용도 및 신뢰성
+    normalize(player.games, 10, 35) * 3, // 출장경기수
+    normalize(player.losses, 15, 0) * 2, // 패전 (역정규화)
+    
+    // 🎂 나이 (경험과 전성기)
+    normalize(age, 20, 45) * 3, // 나이
+  ];
+
+  // 🎯 최종 벡터 = 스탯 + 팀 원핫 + 포지션 원핫
+  return [...statVector, ...teamOneHot, ...positionOneHot];
 }
 
 export function playerToVector(player: Player): number[] {
-  // 현재 데이터가 타자 전용이므로 모든 선수를 타자로 처리
-  return createBatterVector(player);
+  if (isPitcher(player)) {
+    return createPitcherVector(player);
+  } else {
+    return createBatterVector(player);
+  }
 }
