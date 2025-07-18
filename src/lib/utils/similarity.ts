@@ -1,10 +1,13 @@
 import { playerToVector, isPitcher, type Player } from './vector.js';
 
 export function cosineSimilarity(vecA: number[], vecB: number[]): number {
-  if (vecA.length !== vecB.length) return 0;
+  if (vecA.length !== vecB.length) {
+    console.log('벡터 길이 불일치:', vecA.length, 'vs', vecB.length);
+    return 0;
+  }
 
-  const validVecA = vecA.map((v) => (isNaN(v) ? 0 : v));
-  const validVecB = vecB.map((v) => (isNaN(v) ? 0 : v));
+  const validVecA = vecA.map((v) => (isNaN(v) || v === undefined ? 0 : v));
+  const validVecB = vecB.map((v) => (isNaN(v) || v === undefined ? 0 : v));
 
   const dotProduct = validVecA.reduce((sum, a, i) => sum + a * validVecB[i], 0);
 
@@ -18,7 +21,7 @@ export function cosineSimilarity(vecA: number[], vecB: number[]): number {
   return Math.max(0, Math.min(100, ((similarity + 1) / 2) * 100));
 }
 
-export function calculateVectorSimilarity(guessPlayer: Player, targetPlayer: Player): number {
+export function calculateVectorSimilarity(guessPlayer: Player, targetPlayer: Player, mode: '2025' | 'career' = '2025'): number {
   // 투수/타자 타입 확인
   const isGuessPitcher = isPitcher(guessPlayer);
   const isTargetPitcher = isPitcher(targetPlayer);
@@ -37,9 +40,11 @@ export function calculateVectorSimilarity(guessPlayer: Player, targetPlayer: Pla
   }
   
   // 같은 타입일 때는 벡터 기반 유사도 계산
-  const guessVector = playerToVector(guessPlayer);
-  const targetVector = playerToVector(targetPlayer);
+  const guessVector = playerToVector(guessPlayer, mode);
+  const targetVector = playerToVector(targetPlayer, mode);
   console.log('벡터 차원:', guessVector.length);
+  console.log('추측 선수 벡터:', guessVector);
+  console.log('정답 선수 벡터:', targetVector);
   
   const rawSimilarity = cosineSimilarity(guessVector, targetVector);
   console.log('원본 코사인 유사도:', rawSimilarity);
