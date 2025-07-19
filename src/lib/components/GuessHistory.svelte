@@ -1,6 +1,7 @@
 <script lang="ts">
   import { guesses } from '../stores/game.js';
   import type { Guess } from '../stores/game.js';
+  import { getTeamColor } from '../utils/teamColors.js';
   import { onMount } from 'svelte';
 
   type SortKey = 'input' | 'name' | 'similarity';
@@ -239,7 +240,7 @@
                   <div class="flex-1 min-w-0">
                     <h3 class="text-sm font-semibold text-gray-900 sm:text-base">{guess.player.name}</h3>
                     <div class="flex flex-wrap gap-1 items-center mt-1">
-                      <span class="px-2 py-0.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md">
+                      <span class="px-2 py-0.5 text-xs font-medium text-white rounded-md" style="background-color: {getTeamColor(guess.player.team)}">
                         {guess.player.team}
                       </span>
                       <span class="px-2 py-0.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md">

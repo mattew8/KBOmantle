@@ -45,6 +45,7 @@ export function getTodayPlayer(players: Player[], date?: string): Player {
  */
 export interface DailyGameState {
   date: string;
+  mode: "2025" | "career"; // 게임 모드 추가
   targetPlayerId: string;
   guesses: Array<{
     playerId: string;
@@ -58,11 +59,11 @@ export interface DailyGameState {
 }
 
 /**
- * 오늘의 게임 상태를 localStorage에서 가져오기
+ * 오늘의 게임 상태를 localStorage에서 가져오기 (모드별 분리)
  */
-export function getTodayGameState(date?: string): DailyGameState | null {
+export function getTodayGameState(mode: "2025" | "career", date?: string): DailyGameState | null {
   const targetDate = date || getTodayDateKST();
-  const key = `${CONFIG.STORAGE_PREFIX}${targetDate}`;
+  const key = `${CONFIG.STORAGE_PREFIX}${targetDate}-${mode}`;
   
   try {
     const saved = localStorage.getItem(key);
@@ -70,8 +71,8 @@ export function getTodayGameState(date?: string): DailyGameState | null {
     
     const state = JSON.parse(saved) as DailyGameState;
     
-    // 날짜가 일치하는지 확인
-    if (state.date !== targetDate) {
+    // 날짜와 모드가 일치하는지 확인
+    if (state.date !== targetDate || state.mode !== mode) {
       localStorage.removeItem(key);
       return null;
     }
@@ -84,10 +85,10 @@ export function getTodayGameState(date?: string): DailyGameState | null {
 }
 
 /**
- * 게임 상태를 localStorage에 저장하기
+ * 게임 상태를 localStorage에 저장하기 (모드별 분리)
  */
 export function saveTodayGameState(state: DailyGameState): void {
-  const key = `${CONFIG.STORAGE_PREFIX}${state.date}`;
+  const key = `${CONFIG.STORAGE_PREFIX}${state.date}-${state.mode}`;
   
   try {
     localStorage.setItem(key, JSON.stringify(state));
@@ -97,13 +98,14 @@ export function saveTodayGameState(state: DailyGameState): void {
 }
 
 /**
- * 새로운 게임 상태 초기화
+ * 새로운 게임 상태 초기화 (모드 추가)
  */
-export function createNewGameState(targetPlayer: Player, date?: string): DailyGameState {
+export function createNewGameState(targetPlayer: Player, mode: "2025" | "career", date?: string): DailyGameState {
   const targetDate = date || getTodayDateKST();
   
   return {
     date: targetDate,
+    mode: mode,
     targetPlayerId: targetPlayer.id,
     guesses: [],
     isCompleted: false,
@@ -144,8 +146,8 @@ export function addGuessToGameState(
 /**
  * 게임이 오늘 이미 완료되었는지 확인
  */
-export function isGameCompletedToday(date?: string): boolean {
-  const state = getTodayGameState(date);
+export function isGameCompletedToday(mode: "2025" | "career", date?: string): boolean {
+  const state = getTodayGameState(mode, date);
   return state?.isCompleted || false;
 }
 
@@ -186,7 +188,12 @@ export function cleanOldGameStates(): void {
   const cutoffDate = cutoffDaysAgo.toISOString().split('T')[0];
   
   gameKeys.forEach(key => {
-    const dateStr = key.replace(CONFIG.STORAGE_PREFIX, '');
+    // 새로운 형식: kbomantle-YYYY-MM-DD-MODE 또는 기존 형식: kbomantle-YYYY-MM-DD
+    const keyParts = key.replace(CONFIG.STORAGE_PREFIX, '');
+    const dateStr = keyParts.includes('-2025') || keyParts.includes('-career') 
+      ? keyParts.split('-').slice(0, 3).join('-')  // 모드가 있는 경우
+      : keyParts;  // 모드가 없는 기존 형식
+    
     if (dateStr < cutoffDate) {
       localStorage.removeItem(key);
     }

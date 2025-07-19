@@ -45,10 +45,10 @@ export function calculateVectorSimilarity(
     isTargetPitcher ? "(투수)" : "(타자)"
   );
 
-  // 서로 다른 타입일 때는 팀만 비교
+  // 서로 다른 타입일 때 (투수 vs 타자)
   if (isGuessPitcher !== isTargetPitcher) {
     console.log("서로 다른 타입 - 팀 비교만 실행");
-    const teamSimilarity = guessPlayer.team === targetPlayer.team ? 15 : 0;
+    const teamSimilarity = guessPlayer.team === targetPlayer.team ? 10 : 0;
     console.log("팀 유사도:", teamSimilarity);
     return teamSimilarity;
   }

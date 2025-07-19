@@ -20,8 +20,8 @@
   });
 
   function initializeGame() {
-    // 데일리 게임 초기화
-    const isCompleted = initializeDailyGame($allPlayers);
+    // 데일리 게임 초기화 (현재 게임 모드로)
+    const isCompleted = initializeDailyGame($allPlayers, $gameMode);
     gameInitialized = true;
     
     if (isCompleted) {
