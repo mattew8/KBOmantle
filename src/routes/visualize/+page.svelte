@@ -596,6 +596,67 @@
   :global(.explanation-text) {
     line-height: 1.4;
   }
+  
+  /* 모달 애니메이션 */
+  .modal-backdrop {
+    animation: fadeIn 0.3s ease-out;
+    backdrop-filter: blur(4px);
+    transition: backdrop-filter 0.3s ease-out;
+  }
+  
+  .modal-content {
+    animation: modalSlideIn 0.3s ease-out;
+    transform-origin: center center;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9) translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+  
+  /* 모달 닫기 애니메이션 */
+  .modal-backdrop.closing {
+    animation: fadeOut 0.3s ease-in;
+  }
+  
+  .modal-content.closing {
+    animation: modalSlideOut 0.3s ease-in;
+  }
+  
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  
+  @keyframes modalSlideOut {
+    from {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.9) translateY(-20px);
+    }
+  }
 </style>
 
 <div class="flex flex-col h-screen bg-gray-50">
@@ -1098,13 +1159,19 @@
 
 <!-- 시각화 해석 가이드 모달 -->
 {#if showGuideModal}
-  <div class="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
-    <div class="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+  <div 
+    class="modal-backdrop flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50"
+    on:click={() => showGuideModal = false}
+  >
+    <div 
+      class="modal-content bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl"
+      on:click|stopPropagation
+    >
       <div class="flex justify-between items-start mb-4">
         <h2 class="text-2xl font-bold text-gray-800">🎯 시각화 해석 가이드</h2>
         <button 
           on:click={() => showGuideModal = false}
-          class="text-xl font-bold text-gray-500 hover:text-gray-700"
+          class="text-xl font-bold text-gray-500 hover:text-gray-700 hover:scale-110 transition-all duration-200 rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-100"
         >
           ✕
         </button>
@@ -1128,54 +1195,71 @@
         </div>
 
         <div>
-          <h3 class="mb-2 text-lg font-semibold text-green-600">🎨 팀 색상 패턴 분석</h3>
-          <ul class="ml-4 space-y-1">
-            <li><strong>같은 색상이 모여있으면:</strong> 해당 팀의 전략이나 선수 스타일이 유사</li>
-            <li><strong>색상이 골고루 퍼져있으면:</strong> 다양한 타입의 선수를 보유한 팀</li>
-            <li><strong>특정 영역에 한 팀이 집중:</strong> 그 팀만의 독특한 선수 스타일</li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 class="mb-2 text-lg font-semibold text-green-600">🔗 초록 연결선의 의미 (Hover 시 표시)</h3>
+          <h3 class="mb-2 text-lg font-semibold text-green-600">🔗 유사도 연결선의 의미</h3>
           <ul class="ml-4 space-y-1">
             <li><strong>상위 5명만 표시:</strong> 선택한 선수와 가장 유사한 5명의 선수들만 연결</li>
             <li><strong>선 굵기 & 색상:</strong> 1순위가 가장 굵고 진하며, 순위가 낮을수록 얇고 연해짐</li>
             <li><strong>유사도 %:</strong> 연결선 중간에 정확한 유사도 수치 표시</li>
-            <li><strong>유사한 선수가 적은 경우:</strong> 독특하고 특화된 스타일의 선수 (게임 최고 난이도!)</li>
+            <li><strong>연결선 색상:</strong> 선택된 선수는 파란색, hover한 선수는 초록색</li>
           </ul>
         </div>
 
         <div>
-          <h3 class="mb-2 text-lg font-semibold text-purple-600">📊 클러스터별 해석 예시</h3>
+          <h3 class="mb-2 text-lg font-semibold text-purple-600">🏷️ 해시태그 시스템</h3>
+          <div class="p-3 mb-3 bg-purple-50 rounded-lg border border-purple-200">
+            <p class="mb-2 text-sm font-semibold text-purple-800">유사도 이유가 해시태그로 표시됩니다</p>
+            <div class="flex flex-wrap gap-1 text-xs">
+              <span class="hashtag">#동년배</span>
+              <span class="hashtag">#타격의달인</span>
+              <span class="hashtag">#홈런공장장</span>
+              <span class="hashtag">#불펜의제왕</span>
+            </div>
+          </div>
           <ul class="ml-4 space-y-1">
-            <li><strong>좌상단 그룹:</strong> 높은 타율, 낮은 파워 (컨택형 타자)</li>
-            <li><strong>우상단 그룹:</strong> 높은 파워, 낮은 타율 (장타형 타자)</li>
-            <li><strong>중앙 그룹:</strong> 밸런스형 선수들</li>
-            <li><strong>외곽 선수:</strong> 극단적 특성을 가진 선수</li>
+            <li><strong>나이 관련:</strong> #동년배, #비슷한나이</li>
+            <li><strong>타자 특성:</strong> #홈런공장장, #타격의달인, #배달의기수, #컨택형타자 등</li>
+            <li><strong>투수 특성:</strong> #불펜의제왕, #탈삼진마술사, #에이스, #마무리킹 등</li>
+            <li><strong>스탯 유사:</strong> #타율비슷, #홈런비슷, #ERA비슷 등</li>
           </ul>
         </div>
 
         <div>
-          <h3 class="mb-2 text-lg font-semibold text-orange-600">🎮 KBOmantle 게임 활용법</h3>
-          <div class="p-4 bg-orange-50 rounded-lg">
-            <p class="mb-2"><strong>게임 관점에서:</strong></p>
+          <h3 class="mb-2 text-lg font-semibold text-orange-600">🎨 팀 색상 필터링</h3>
+          <div class="p-3 mb-3 bg-orange-50 rounded-lg border border-orange-200">
+            <p class="text-sm text-orange-800">
+              <strong>중요:</strong> 팀은 유사도 계산에 영향을 주지 않습니다. 
+              색상은 시각적 구분을 위한 것으로, 같은 색상끼리 모여있다고 해서 유사한 것은 아닙니다.
+            </p>
+          </div>
+          <ul class="ml-4 space-y-1">
+            <li><strong>팀 필터링:</strong> 하단 팀 색상을 클릭하면 해당 팀 선수들만 하이라이트</li>
+            <li><strong>시각적 구분:</strong> 각 팀은 고유한 색상으로 표시되어 구분이 쉬움</li>
+            <li><strong>유사도와 무관:</strong> 팀이 같다고 해서 유사도가 높은 것은 아님</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="mb-2 text-lg font-semibold text-indigo-600">🎮 KBOmantle 게임 활용법</h3>
+          <div class="p-4 bg-indigo-50 rounded-lg">
+            <p class="mb-2"><strong>시각화를 게임에 활용하는 방법:</strong></p>
             <ul class="ml-4 space-y-1">
-              <li>정답 선수가 <strong>중앙</strong>에 있으면: 평균적 스탯의 선수들이 높은 유사도</li>
-              <li>정답 선수가 <strong>외곽</strong>에 있으면: 비슷한 특화 스타일 선수들만 높은 유사도</li>
-              <li><strong>같은 클러스터</strong> 내 선수들: 40-70% 유사도 예상</li>
+              <li><strong>유사한 선수 파악:</strong> 차트에서 가까운 위치에 있는 선수들을 게임에서 시도해보기</li>
+              <li><strong>해시태그 참고:</strong> 같은 특성 태그를 가진 선수들은 유사도가 높을 가능성</li>
+              <li><strong>연결선 활용:</strong> hover해서 나타나는 연결선으로 실제 유사도 확인</li>
+              <li><strong>클러스터 탐색:</strong> 높은 유사도가 나오면 주변 선수들도 시도</li>
             </ul>
           </div>
         </div>
 
         <div>
-          <h3 class="mb-2 text-lg font-semibold text-indigo-600">🎯 전략적 활용</h3>
-          <div class="p-4 bg-indigo-50 rounded-lg">
-            <ol class="ml-4 space-y-2 list-decimal">
-              <li><strong>첫 추측:</strong> 중앙 근처의 밸런스형 선수로 시작</li>
-              <li><strong>유사도 확인 후:</strong> 비슷한 영역의 선수들 탐색</li>
-              <li><strong>클러스터 이동:</strong> 유사도가 낮으면 다른 영역 시도</li>
-            </ol>
+          <h3 class="mb-2 text-lg font-semibold text-gray-600">⚠️ 주의사항</h3>
+          <div class="p-4 bg-gray-50 rounded-lg">
+            <ul class="ml-4 space-y-1">
+              <li><strong>차트상 거리는 참고용:</strong> 실제 유사도와 정확히 일치하지 않을 수 있음</li>
+              <li><strong>연결선이 정확:</strong> 차트 위치보다는 연결선의 %를 신뢰하세요</li>
+              <li><strong>팀은 무관:</strong> 같은 팀이라고 해서 유사도가 높은 것은 아님</li>
+              <li><strong>특성 태그 활용:</strong> 해시태그가 유사도를 이해하는 가장 좋은 방법</li>
+            </ul>
           </div>
         </div>
 
@@ -1190,7 +1274,7 @@
       <div class="mt-6 text-center">
         <button 
           on:click={() => showGuideModal = false}
-          class="px-6 py-2 text-white bg-blue-500 rounded-lg transition-colors hover:bg-blue-600"
+          class="px-6 py-2 text-white bg-blue-500 rounded-lg transition-all duration-200 hover:bg-blue-600 hover:scale-105 hover:shadow-lg active:scale-95"
         >
           확인
         </button>
