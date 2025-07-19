@@ -14,6 +14,7 @@
   let suggestions = $state<Player[]>([]);
   let selectedIndex = $state(-1);
   let inputElement: HTMLInputElement;
+  let dropdownElement: HTMLDivElement;
   let showDropdown = $state(true);
   let lastInput = $state('');
 
@@ -71,6 +72,24 @@
     }
   }
 
+  function scrollSelectedIntoView() {
+    if (selectedIndex >= 0 && dropdownElement) {
+      const selectedElement = dropdownElement.children[selectedIndex] as HTMLElement;
+      if (selectedElement) {
+        selectedElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'nearest'
+        });
+      }
+    }
+  }
+
+  function handleMouseEnter(index: number) {
+    selectedIndex = index;
+    scrollSelectedIntoView();
+  }
+
   function handleKeydown(event: KeyboardEvent) {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
@@ -79,9 +98,11 @@
       } else {
         selectedIndex = Math.min(selectedIndex + 1, suggestions.length - 1);
       }
+      scrollSelectedIntoView();
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
       selectedIndex = Math.max(selectedIndex - 1, -1);
+      scrollSelectedIntoView();
     } else if (event.key === 'Enter') {
       event.preventDefault();
       if (selectedIndex >= 0 && suggestions[selectedIndex]) {
@@ -126,10 +147,11 @@
       />
       
       {#if suggestions.length > 0}
-        <div class="overflow-y-auto absolute left-0 top-full z-10 mt-1 w-full max-h-60 bg-white rounded-lg border border-gray-200 shadow-lg">
+        <div bind:this={dropdownElement} class="overflow-y-auto absolute left-0 top-full z-10 mt-1 w-full max-h-60 bg-white rounded-lg border border-gray-200 shadow-lg">
           {#each suggestions as player, index}
             <button
               onclick={() => selectPlayer(player)}
+              onmouseenter={() => handleMouseEnter(index)}
               class="w-full px-3 py-2 sm:px-4 sm:py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 {selectedIndex === index ? 'bg-blue-50' : ''} touch-manipulation"
             >
               <div class="text-sm font-medium text-gray-900">{player.name}</div>
