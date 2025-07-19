@@ -443,13 +443,24 @@
         시각화 도구
       </span>
     </div>
-    <button 
-      on:click={() => showGuideModal = true}
-      class="flex justify-center items-center w-8 h-8 text-sm text-white bg-blue-500 rounded-full transition-colors hover:bg-blue-600"
-      title="시각화 해석 가이드"
-    >
-      ?
-    </button>
+    <div class="flex gap-3 items-center">
+      <a 
+        href="/"
+        class="flex gap-2 items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg transition-colors hover:bg-green-700"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        게임하기
+      </a>
+      <button 
+        on:click={() => showGuideModal = true}
+        class="flex justify-center items-center w-8 h-8 text-sm text-white bg-blue-500 rounded-full transition-colors hover:bg-blue-600"
+        title="시각화 해석 가이드"
+      >
+        ?
+      </button>
+    </div>
   </header>
 
   <!-- 컨텐츠 영역 -->
