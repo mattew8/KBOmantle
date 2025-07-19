@@ -3,7 +3,7 @@
   import type { Player } from '$lib/utils/vector';
   import { playerToVector, isBatter, isPitcher } from '$lib/utils/vector';
   import { calculateVectorSimilarity } from '$lib/utils/similarity';
-  import { TEAM_COLORS, getTeamColor, getTeamColorEntries } from '$lib/utils/teamColors';
+  import { getTeamColor, getTeamColorEntries } from '$lib/utils/teamColors';
   import hitters2025 from '$lib/data/hitters-2025.json';
   import hittersTotal from '$lib/data/hitters-total.json';
   import pitchers2025 from '$lib/data/pitchers-2025.json';

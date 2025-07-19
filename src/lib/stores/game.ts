@@ -97,15 +97,15 @@ export function setGameMode(mode: GameMode) {
 /**
  * 데일리 게임 초기화 - 오늘의 게임 상태 로드 또는 새로 생성
  */
-export function initializeDailyGame(allPlayers: Player[]): boolean {
+export function initializeDailyGame(allPlayers: Player[], mode: "2025" | "career"): boolean {
   // 오래된 게임 상태 정리
   cleanOldGameStates();
 
   // 오늘의 선수 선택
   const todayPlayer = getTodayPlayer(allPlayers);
 
-  // 기존 게임 상태 확인
-  const existingState = getTodayGameState();
+  // 기존 게임 상태 확인 (모드별)
+  const existingState = getTodayGameState(mode);
 
   if (existingState) {
     // 기존 게임 상태 복원
@@ -113,7 +113,7 @@ export function initializeDailyGame(allPlayers: Player[]): boolean {
     return existingState.isCompleted;
   } else {
     // 새로운 게임 시작
-    const newState = createNewGameState(todayPlayer);
+    const newState = createNewGameState(todayPlayer, mode);
     dailyGameState.set(newState);
     saveTodayGameState(newState);
 
