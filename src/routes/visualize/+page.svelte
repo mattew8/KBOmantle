@@ -35,6 +35,7 @@
   let showGuideModal = false;
   let hoveredPlayerIndex: number | null = null; // hover된 선수의 인덱스
   let selectedPlayerIndex: number | null = null; // 클릭으로 선택된 선수의 인덱스
+  let selectedTeam: string | null = null; // 필터링된 팀
 
   // 필터링 함수
   function updatePlayers() {
@@ -61,6 +62,26 @@
   // 필터 변경 시 업데이트
   $: if (selectedYear || selectedType) {
     updatePlayers();
+  }
+
+  // 팀 필터링 함수
+  function handleTeamFilter(teamName: string) {
+    if (selectedTeam === teamName) {
+      // 같은 팀 다시 클릭하면 필터 해제
+      selectedTeam = null;
+    } else {
+      // 새로운 팀 선택
+      selectedTeam = teamName;
+    }
+    
+    // 선택된 선수 초기화
+    selectedPlayerIndex = null;
+    hoveredPlayerIndex = null;
+    
+    // 차트 다시 그리기
+    if (canvas && ctx) {
+      drawVisualization();
+    }
   }
 
 
@@ -202,10 +223,16 @@
       const isSelected = i === selectedPlayerIndex;
       const isSpecial = isHovered || isSelected;
       
-      // 포인트 그리기 (hover되거나 선택된 선수는 더 크게)
+      // 팀 필터링 상태 확인
+      const isHighlighted = selectedTeam === null || player.team === selectedTeam;
+      const opacity = isHighlighted ? 1.0 : 0.3; // 필터링된 팀이 아니면 흐리게
+      const radius = isSpecial ? 10 : (isHighlighted ? 6 : 4); // 필터링된 팀이 아니면 작게
+      
+      // 포인트 그리기 (팀 필터링 적용)
+      ctx.globalAlpha = opacity;
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(x, y, isSpecial ? 10 : 6, 0, 2 * Math.PI);
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
       ctx.fill();
       
       // hover되거나 선택된 선수는 테두리 추가
@@ -215,7 +242,8 @@
         ctx.stroke();
       }
       
-      // 선수 이름 표시 (hover되거나 선택된 선수는 볼드)
+      // 선수 이름 항상 표시 (팀 필터링 상태에 따른 투명도 적용)
+      ctx.globalAlpha = opacity;
       ctx.fillStyle = '#333333';
       ctx.font = isSpecial ? 'bold 12px Arial' : '10px Arial';
       ctx.textAlign = 'center';
@@ -225,6 +253,9 @@
       ctx.fillStyle = '#666666';
       ctx.font = '8px Arial';
       ctx.fillText(player.team, x, y + (isSpecial ? 25 : 20));
+      
+      // 투명도 초기화
+      ctx.globalAlpha = 1.0;
     });
   }
 
@@ -296,7 +327,10 @@
     return reasons.join(', ');
   }
   
-  // 마우스 이벤트 핸들러
+  // 성능 최적화를 위한 debounce 변수
+  let isRedrawing = false;
+  
+  // 마우스 이벤트 핸들러 (성능 최적화)
   function handleMouseMove(event: MouseEvent) {
     if (!canvas || !ctx) return;
     
@@ -331,12 +365,7 @@
     const prevHoveredIndex = hoveredPlayerIndex;
     hoveredPlayerIndex = closestPlayerIndex;
     
-    // hover 상태가 변경되었으면 다시 그리기
-    if (prevHoveredIndex !== hoveredPlayerIndex) {
-      drawVisualization();
-    }
-    
-    // 툴팁 업데이트
+    // 툴팁 업데이트 (hover 상태 변경과 관계없이)
     if (hoveredPlayerIndex !== null) {
       tooltip = {
         visible: true,
@@ -346,6 +375,15 @@
       };
     } else {
       tooltip = { visible: false, x: 0, y: 0, player: null };
+    }
+    
+    // hover 상태가 변경되었을 때만 다시 그리기 (debounce 적용)
+    if (prevHoveredIndex !== hoveredPlayerIndex && !isRedrawing) {
+      isRedrawing = true;
+      requestAnimationFrame(() => {
+        drawVisualization();
+        isRedrawing = false;
+      });
     }
   }
 
@@ -887,10 +925,14 @@
       <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
         <div class="grid grid-cols-5 gap-3 mb-4 text-sm">
           {#each getTeamColorEntries() as { team, color }}
-            <div class="flex items-center">
+            <button 
+              class="flex items-center p-1 rounded transition-colors hover:bg-gray-100 {selectedTeam === team ? 'bg-blue-100 ring-2 ring-blue-300' : ''}"
+              on:click={() => handleTeamFilter(team)}
+              title="클릭하여 {team} 선수들만 표시"
+            >
               <div class="mr-2 w-3 h-3 rounded-full" style="background-color: {color};"></div>
-              <span>{team}</span>
-            </div>
+              <span class="{selectedTeam === team ? 'font-semibold text-blue-800' : ''}">{team}</span>
+            </button>
           {/each}
         </div>
         
