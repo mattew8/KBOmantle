@@ -136,8 +136,8 @@
                 <span class="px-2 py-1 text-xs text-gray-700 bg-gray-100 rounded">{player.team}</span>
                 <span class="hidden sm:inline">{player.type === 'pitcher' ? '투수' : '타자'}</span>
                 {#if player.type === 'pitcher'}
-                  <span class="text-xs sm:text-xs">ERA {player.era?.toFixed(2) || 'N/A'}</span>
-                  <span class="text-xs sm:text-xs">{player.wins || 0}승</span>
+                  <span class="text-xs sm:text-xs">ERA {player.평균자책점?.toFixed(2) || 'N/A'}</span>
+                  <span class="text-xs sm:text-xs">{player.승 || 0}승</span>
                 {:else}
                   <span class="text-xs sm:text-xs">타율 {player.타율?.toFixed(3) || 'N/A'}</span>
                   <span class="text-xs sm:text-xs">{player.홈런 || 0}HR</span>

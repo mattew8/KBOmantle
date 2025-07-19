@@ -5,7 +5,7 @@ export interface BasePlayer {
   name: string;
   team: string;
   birth_date: string;
-  image_url: string;
+  image_url: string | null;
 }
 
 export interface Batter extends BasePlayer {
@@ -34,23 +34,23 @@ export interface Batter extends BasePlayer {
 
 export interface Pitcher extends BasePlayer {
   type: "pitcher";
-  era: number;
-  wins: number;
-  losses: number;
-  saves: number;
-  holds: number;
-  win_percentage: number;
-  innings_pitched: number;
-  hits_allowed: number;
-  home_runs_allowed: number;
-  runs_allowed: number;
-  earned_runs: number;
-  whip: number;
-  throw_hand?: string;
-  strikeouts: number;
-  walks: number;
-  hit_by_pitch: number;
-  games: number;
+  평균자책점: number;
+  경기: number;
+  완투: number;
+  완봉: number;
+  승: number;
+  패: number;
+  세이브: number;
+  홀드: number;
+  승률: number;
+  이닝: number;
+  피안타: number;
+  홈런: number;
+  볼넷: number;
+  고의사구: number;
+  삼진: number;
+  실점: number;
+  자책점: number;
 }
 
 export type Player = Batter | Pitcher;
@@ -109,16 +109,8 @@ export function createBatterVector(
     teamOneHot[teamCode - 1] = 4; // 팀 코드를 인덱스로 변환 (1-10 → 0-9)
   }
 
-  // OPS 계산 (출루율 + 장타율) - 안전한 계산
+  // OPS 계산 (출루율 + 장타율)
   const ops = (player.출루율 || 0) + (player.장타율 || 0);
-  console.log(
-    "OPS 계산:",
-    ops,
-    "출루율:",
-    player.출루율,
-    "장타율:",
-    player.장타율
-  );
 
   // 모드별 정규화 범위
   const ranges =
@@ -248,27 +240,27 @@ export function createPitcherVector(
     mode === "2025"
       ? {
           // 2025년 투수 기록 범위
-          era: { min: 1.5, max: 6.0 },
-          whip: { min: 0.8, max: 2.0 },
-          wins: { min: 0, max: 20 },
-          strikeouts: { min: 50, max: 250 },
-          innings: { min: 50, max: 250 },
-          saves: { min: 0, max: 30 },
-          holds: { min: 0, max: 25 },
-          games: { min: 10, max: 35 },
-          losses: { min: 0, max: 15 },
+          평균자책점: { min: 1.5, max: 6.0 },
+          WHIP: { min: 0.8, max: 2.0 },
+          승: { min: 0, max: 20 },
+          삼진: { min: 50, max: 250 },
+          이닝: { min: 50, max: 250 },
+          세이브: { min: 0, max: 30 },
+          홀드: { min: 0, max: 25 },
+          경기: { min: 10, max: 35 },
+          패: { min: 0, max: 15 },
         }
       : {
           // 통산 투수 기록 범위
-          era: { min: 1.5, max: 6.0 },
-          whip: { min: 0.8, max: 2.0 },
-          wins: { min: 0, max: 300 },
-          strikeouts: { min: 0, max: 2500 },
-          innings: { min: 0, max: 3000 },
-          saves: { min: 0, max: 400 },
-          holds: { min: 0, max: 200 },
-          games: { min: 0, max: 800 },
-          losses: { min: 0, max: 200 },
+          평균자책점: { min: 1.5, max: 6.0 },
+          WHIP: { min: 0.8, max: 2.0 },
+          승: { min: 0, max: 300 },
+          삼진: { min: 0, max: 2500 },
+          이닝: { min: 0, max: 3000 },
+          세이브: { min: 0, max: 400 },
+          홀드: { min: 0, max: 200 },
+          경기: { min: 0, max: 800 },
+          패: { min: 0, max: 200 },
         };
 
   // 🎯 순수 스탯 벡터 - 투수 특화
@@ -276,45 +268,37 @@ export function createPitcherVector(
     // 🔥 핵심 투수 능력 (높은 가중치)
     // ERA는 낮을수록 좋으므로 역정규화 후 높은 가중치
     normalize(
-      ranges.era.max - (player.era || 0),
+      ranges.평균자책점.max - (player.평균자책점 || 0),
       0,
-      ranges.era.max - ranges.era.min
+      ranges.평균자책점.max - ranges.평균자책점.min
     ) * 10, // ERA (역정규화, 최고 가중치)
     normalize(
-      ranges.whip.max - (player.whip || 0),
+      ranges.WHIP.max - ((player.볼넷 + player.피안타) / player.이닝 || 0),
       0,
-      ranges.whip.max - ranges.whip.min
-    ) * 8, // WHIP (역정규화, 높은 가중치)
-    normalize(player.wins || 0, ranges.wins.min, ranges.wins.max) * 7, // 승수
-    normalize(
-      player.strikeouts || 0,
-      ranges.strikeouts.min,
-      ranges.strikeouts.max
-    ) * 8, // 탈삼진 (높은 가중치)
-    normalize(
-      player.innings_pitched || 0,
-      ranges.innings.min,
-      ranges.innings.max
-    ) * 7, // 이닝
+      ranges.WHIP.max - ranges.WHIP.min
+    ) * 8, // WHIP (계산: (볼넷+피안타)/이닝, 역정규화, 높은 가중치)
+    normalize(player.승 || 0, ranges.승.min, ranges.승.max) * 7, // 승수
+    normalize(player.삼진 || 0, ranges.삼진.min, ranges.삼진.max) * 8, // 탈삼진 (높은 가중치)
+    normalize(player.이닝 || 0, ranges.이닝.min, ranges.이닝.max) * 7, // 이닝
 
     // ⚡ 추가 성과 지표
-    normalize(player.win_percentage || 0, 0.2, 0.8) * 6, // 승률
-    normalize(player.saves || 0, ranges.saves.min, ranges.saves.max) * 5, // 세이브 (마무리 투수)
-    normalize(player.holds || 0, ranges.holds.min, ranges.holds.max) * 4, // 홀드 (중간 투수)
+    normalize(player.승률 || 0, 0.2, 0.8) * 6, // 승률
+    normalize(player.세이브 || 0, ranges.세이브.min, ranges.세이브.max) * 5, // 세이브 (마무리 투수)
+    normalize(player.홀드 || 0, ranges.홀드.min, ranges.홀드.max) * 4, // 홀드 (중간 투수)
 
     // 💪 피안타 및 실점 관련 (낮을수록 좋음) - 간소화
-    normalize(player.hits_allowed || 0, 200, 0) * 5, // 피안타 (역정규화)
-    normalize(player.runs_allowed || 0, 100, 0) * 4, // 실점 (역정규화)
-    normalize(player.earned_runs || 0, 80, 0) * 4, // 자책점 (역정규화)
-    normalize(player.home_runs_allowed || 0, 20, 0) * 5, // 피홈런 (역정규화)
+    normalize(player.피안타 || 0, 200, 0) * 5, // 피안타 (역정규화)
+    normalize(player.실점 || 0, 100, 0) * 4, // 실점 (역정규화)
+    normalize(player.자책점 || 0, 80, 0) * 4, // 자책점 (역정규화)
+    normalize(player.홈런 || 0, 20, 0) * 5, // 피홈런 (역정규화)
 
     // 🧠 제구력 관련
-    normalize(player.walks || 0, 60, 0) * 5, // 볼넷 (역정규화)
-    normalize(player.hit_by_pitch || 0, 10, 0) * 3, // 몸에 맞는 볼 (역정규화)
+    normalize(player.볼넷 || 0, 60, 0) * 5, // 볼넷 (역정규화)
+    normalize(player.고의사구 || 0, 10, 0) * 3, // 고의사구 (역정규화)
 
     // 📈 활용도 및 신뢰성
-    normalize(player.games || 0, ranges.games.min, ranges.games.max) * 3, // 출장경기수
-    normalize(player.losses || 0, ranges.losses.max, ranges.losses.min) * 2, // 패전 (역정규화)
+    normalize(player.경기 || 0, ranges.경기.min, ranges.경기.max) * 3, // 출장경기수
+    normalize(player.패 || 0, ranges.패.max, ranges.패.min) * 2, // 패전 (역정규화)
 
     // 🎂 나이 (경험과 전성기)
     normalize(age, 20, 45) * 3, // 나이
