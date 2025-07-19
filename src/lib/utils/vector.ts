@@ -101,13 +101,7 @@ export function createBatterVector(
   };
   const age = calculateAge(player.birth_date);
 
-  // 🎯 원핫인코딩 - 팀 벡터 (10개 팀) - 포케맨틀 스타일 가중치
-  const teamOneHot = new Array(10).fill(0);
-  const teamCode = TEAM_CODES[player.team];
-  console.log("팀 코드:", teamCode, "팀명:", player.team);
-  if (teamCode && teamCode >= 1 && teamCode <= 10) {
-    teamOneHot[teamCode - 1] = 4; // 팀 코드를 인덱스로 변환 (1-10 → 0-9)
-  }
+  // 🎯 팀 가중치 완전 제거
 
   // OPS 계산 (출루율 + 장타율)
   const ops = (player.출루율 || 0) + (player.장타율 || 0);
@@ -190,13 +184,10 @@ export function createBatterVector(
     normalize(age, 20, 45) * 3, // 나이
   ];
 
-  // 🎯 최종 벡터 = 스탯 + 팀 원핫
-  const finalVector = [...statVector, ...teamOneHot];
+  // 🎯 최종 벡터 = 스탯만 (팀 가중치 제거)
   console.log("스탯 벡터 길이:", statVector.length);
-  console.log("팀 원핫 벡터 길이:", teamOneHot.length);
-  console.log("최종 벡터 길이:", finalVector.length);
-  console.log("최종 벡터:", finalVector);
-  return finalVector;
+  console.log("최종 벡터:", statVector);
+  return statVector;
 }
 
 export function createPitcherVector(
@@ -224,16 +215,7 @@ export function createPitcherVector(
   };
   const age = calculateAge(player.birth_date);
 
-  // 🎯 원핫인코딩 - 팀 벡터 (10개 팀) - 포케맨틀 스타일 가중치
-  const teamOneHot = new Array(10).fill(0);
-  const teamCode = TEAM_CODES[player.team];
-  if (teamCode && teamCode >= 1 && teamCode <= 10) {
-    teamOneHot[teamCode - 1] = 4; // 팀 코드를 인덱스로 변환 (1-10 → 0-9)
-  }
-
-  // 🎯 원핫인코딩 - 포지션 벡터 (투수는 단일 포지션)
-  const positionOneHot = new Array(3).fill(0);
-  positionOneHot[0] = 5; // 투수 포지션
+  // 🎯 팀 가중치 완전 제거
 
   // 모드별 정규화 범위 (투수)
   const ranges =
@@ -304,8 +286,8 @@ export function createPitcherVector(
     normalize(age, 20, 45) * 3, // 나이
   ];
 
-  // 🎯 최종 벡터 = 스탯 + 팀 원핫 + 포지션 원핫
-  return [...statVector, ...teamOneHot, ...positionOneHot];
+  // 🎯 최종 벡터 = 스탯만 (팀 가중치 제거)
+  return statVector;
 }
 
 export function playerToVector(

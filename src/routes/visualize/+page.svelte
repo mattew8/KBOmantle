@@ -3,6 +3,7 @@
   import type { Player } from '$lib/utils/vector';
   import { playerToVector, isBatter, isPitcher } from '$lib/utils/vector';
   import { calculateVectorSimilarity } from '$lib/utils/similarity';
+  import { getTeamColor, getTeamColorEntries } from '$lib/utils/teamColors';
   import hitters2025 from '$lib/data/hitters-2025.json';
   import hittersTotal from '$lib/data/hitters-total.json';
   import pitchers2025 from '$lib/data/pitchers-2025.json';
@@ -34,6 +35,39 @@
   let showGuideModal = false;
   let hoveredPlayerIndex: number | null = null; // hover된 선수의 인덱스
   let selectedPlayerIndex: number | null = null; // 클릭으로 선택된 선수의 인덱스
+  let selectedTeam: string | null = null; // 필터링된 팀
+  
+  // 아코디언 상태
+  let showDetailedStats = false;
+  let showSimilarPlayers = true;
+  
+  // Top 5 유사 선수 계산
+  $: top5SimilarPlayers = selectedPlayerIndex !== null ? getTop5SimilarPlayers(selectedPlayerIndex) : [];
+  
+  // Top 5 유사 선수 계산 함수
+  function getTop5SimilarPlayers(targetIndex: number) {
+    if (!allPlayers[targetIndex] || allPlayers.length === 0) return [];
+    
+    const targetPlayer = allPlayers[targetIndex];
+    const vectorMode = selectedYear === 'total' ? 'career' : '2025';
+    
+    const similarities = [];
+    for (let i = 0; i < allPlayers.length; i++) {
+      if (i === targetIndex) continue; // 자기 자신 제외
+      
+      const similarity = calculateVectorSimilarity(targetPlayer, allPlayers[i], vectorMode);
+      similarities.push({
+        index: i,
+        player: allPlayers[i],
+        similarity: similarity,
+        explanation: generateSimilarityExplanation(targetPlayer, allPlayers[i])
+      });
+    }
+    
+    return similarities
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, 5);
+  }
 
   // 필터링 함수
   function updatePlayers() {
@@ -60,6 +94,26 @@
   // 필터 변경 시 업데이트
   $: if (selectedYear || selectedType) {
     updatePlayers();
+  }
+
+  // 팀 필터링 함수
+  function handleTeamFilter(teamName: string) {
+    if (selectedTeam === teamName) {
+      // 같은 팀 다시 클릭하면 필터 해제
+      selectedTeam = null;
+    } else {
+      // 새로운 팀 선택
+      selectedTeam = teamName;
+    }
+    
+    // 선택된 선수 초기화
+    selectedPlayerIndex = null;
+    hoveredPlayerIndex = null;
+    
+    // 차트 다시 그리기
+    if (canvas && ctx) {
+      drawVisualization();
+    }
   }
 
 
@@ -107,13 +161,11 @@
     // 캔버스 초기화
     ctx.clearRect(0, 0, width, height);
     
-    // 벡터 계산 (게임과 동일한 함수 사용, 단 팀 가중치 제거를 위해 모든 선수 팀을 통일)
+    // 벡터 계산
     // selectedYear를 playerToVector가 예상하는 형식으로 변환
     const vectorMode = selectedYear === 'total' ? 'career' : '2025';
     currentVectors = allPlayers.map(player => {
-      // 팀 가중치 영향을 없애기 위해 모든 선수의 팀을 임시로 통일
-      const playerWithUnifiedTeam = { ...player, team: '롯데' };
-      return playerToVector(playerWithUnifiedTeam, vectorMode);
+      return playerToVector(player, vectorMode);
     });
     const reducedVectors = reduceToPCA(currentVectors);
     
@@ -131,19 +183,7 @@
       padding + ((y - minY) / (maxY - minY)) * (height - 2 * padding)
     ]);
     
-    // 팀별 색상 매핑 (더 구분되는 색상으로 변경)
-    const teamColors: Record<string, string> = {
-      'KIA': '#FF1744',     // 빨강
-      '삼성': '#2196F3',    // 파랑
-      'LG': '#E91E63',      // 핑크
-      '두산': '#9C27B0',    // 보라
-      'KT': '#424242',      // 회색
-      'SSG': '#FF5722',     // 주황빨강
-      '롯데': '#3F51B5',    // 남색
-      '한화': '#FF9800',    // 주황
-      'NC': '#00BCD4',      // 청록
-      '키움': '#4CAF50'     // 초록
-    };
+    // 🎨 공통 팀 색상 사용
     
     // 연결선 그리기 함수
     const drawSimilarityLines = (targetIndex: number, color: string = '34, 197, 94') => {
@@ -210,15 +250,21 @@
     // 선수 포인트 그리기
     allPlayers.forEach((player, i) => {
       const [x, y] = currentNormalizedPoints[i];
-      const color = teamColors[player.team] || '#666666';
+      const color = getTeamColor(player.team);
       const isHovered = i === hoveredPlayerIndex;
       const isSelected = i === selectedPlayerIndex;
       const isSpecial = isHovered || isSelected;
       
-      // 포인트 그리기 (hover되거나 선택된 선수는 더 크게)
+      // 팀 필터링 상태 확인
+      const isHighlighted = selectedTeam === null || player.team === selectedTeam;
+      const opacity = isHighlighted ? 1.0 : 0.3; // 필터링된 팀이 아니면 흐리게
+      const radius = isSpecial ? 10 : (isHighlighted ? 6 : 4); // 필터링된 팀이 아니면 작게
+      
+      // 포인트 그리기 (팀 필터링 적용)
+      ctx.globalAlpha = opacity;
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(x, y, isSpecial ? 10 : 6, 0, 2 * Math.PI);
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
       ctx.fill();
       
       // hover되거나 선택된 선수는 테두리 추가
@@ -228,7 +274,8 @@
         ctx.stroke();
       }
       
-      // 선수 이름 표시 (hover되거나 선택된 선수는 볼드)
+      // 선수 이름 항상 표시 (팀 필터링 상태에 따른 투명도 적용)
+      ctx.globalAlpha = opacity;
       ctx.fillStyle = '#333333';
       ctx.font = isSpecial ? 'bold 12px Arial' : '10px Arial';
       ctx.textAlign = 'center';
@@ -238,6 +285,9 @@
       ctx.fillStyle = '#666666';
       ctx.font = '8px Arial';
       ctx.fillText(player.team, x, y + (isSpecial ? 25 : 20));
+      
+      // 투명도 초기화
+      ctx.globalAlpha = 1.0;
     });
   }
 
@@ -253,41 +303,81 @@
     return currentYear - birthYear;
   }
 
-  // 유사도 설명 생성 함수
+  // 선수 특성 라벨 생성 함수
+  function getPlayerLabels(player: any): string[] {
+    const labels: string[] = [];
+    
+    if (player.type === 'batter') {
+      // 타자 특성 라벨
+      if (player.홈런 >= 25) labels.push('홈런 공장장');
+      if (player.타율 >= 0.320) labels.push('타격의 달인');
+      if (player.도루 >= 15) labels.push('배달의 기수');
+      if (player.타점 >= 90) labels.push('RBI 머신');
+      if (player.볼넷 >= 80) labels.push('출루마술사');
+      if (player.삼진 >= 120) labels.push('삼진머신');
+      if ((player.출루율 || 0) + (player.장타율 || 0) >= 0.900) labels.push('OPS 괴물');
+      if (player.타율 >= 0.280 && player.홈런 <= 10) labels.push('컨택형 타자');
+      if (player.홈런 >= 20 && player.타율 <= 0.260) labels.push('장타형 타자');
+      if (player.도루 >= 10 && player.홈런 <= 15) labels.push('스피드형 타자');
+      if (player.볼넷 >= 60 && player.삼진 <= 80) labels.push('선구안 마스터');
+      if (player.타점 >= 70 && player.홈런 >= 15) labels.push('클러치 히터');
+    } else if (player.type === 'pitcher') {
+      // 투수 특성 라벨  
+      if (player.평균자책점 <= 2.50) labels.push('불펜의 제왕');
+      if (player.삼진 >= 150) labels.push('탈삼진 마술사');
+      if (player.승 >= 15) labels.push('에이스');
+      if (player.세이브 >= 20) labels.push('마무리 킹');
+      if (player.홀드 >= 25) labels.push('셋업맨');
+      if (player.WHIP <= 1.10) labels.push('제구력 명장');
+      if (player.이닝 >= 180) labels.push('이닝이터');
+      if (player.완투 >= 3) labels.push('완투머신');
+      if (player.평균자책점 <= 3.00 && player.승 >= 12) labels.push('안정감 갑');
+      if (player.삼진 >= 120 && player.볼넷 <= 40) labels.push('컨트롤 마스터');
+      if (player.피안타율 <= 0.220) labels.push('피안타 방지왕');
+    }
+    
+    return labels;
+  }
+
+  // 유사도 설명 생성 함수 (모든 것을 태그 형태로)
   function generateSimilarityExplanation(player1: Player, player2: Player): string {
-    const reasons: string[] = [];
+    const tags: string[] = [];
     
-    // 팀 비교
-    if (player1.team === player2.team) {
-      reasons.push(`같은 팀 (${player1.team})`);
-    }
-    
-    // 타입 비교
-    if (player1.type === player2.type) {
-      reasons.push(`같은 타입 (${player1.type === 'pitcher' ? '투수' : '타자'})`);
-    }
+    // 팀 비교 제거 (팀은 유사도에 영향 없음)
     
     // 나이 비교
     const age1 = calculateAge(player1.birth_date);
     const age2 = calculateAge(player2.birth_date);
     const ageDiff = Math.abs(age1 - age2);
-    if (ageDiff <= 2) {
-      reasons.push(`비슷한 나이 (${age1}세, ${age2}세)`);
+    if (ageDiff <= 1) {
+      tags.push('#친구사이');
+    } else if (ageDiff <= 3) {
+      tags.push('#비슷한나이');
     }
     
-    // 스탯 비교 (타자의 경우)
-    if (player1.type === 'batter' && player2.type === 'batter') {
+    // 특성 라벨 비교
+    const labels1 = getPlayerLabels(player1);
+    const labels2 = getPlayerLabels(player2);
+    const commonLabels = labels1.filter(label => labels2.includes(label));
+    
+    // 공통 특성 태그 추가
+    commonLabels.slice(0, 3).forEach(label => {
+      tags.push(`#${label}`);
+    });
+    
+    // 특성이 없을 때 기본 스탯 기반 태그
+    if (commonLabels.length === 0 && player1.type === 'batter' && player2.type === 'batter') {
       if (player1.타율 && player2.타율) {
         const avgDiff = Math.abs(player1.타율 - player2.타율);
-        if (avgDiff <= 0.05) {
-          reasons.push(`비슷한 타율 (${player1.타율.toFixed(3)}, ${player2.타율.toFixed(3)})`);
+        if (avgDiff <= 0.020) {
+          tags.push('#타율비슷');
         }
       }
       
       if (player1.홈런 && player2.홈런) {
         const hrDiff = Math.abs(player1.홈런 - player2.홈런);
         if (hrDiff <= 5) {
-          reasons.push(`비슷한 홈런 수 (${player1.홈런}개, ${player2.홈런}개)`);
+          tags.push('#홈런비슷');
         }
       }
       
@@ -296,20 +386,52 @@
         const ops1 = player1.출루율 + player1.장타율;
         const ops2 = player2.출루율 + player2.장타율;
         const opsDiff = Math.abs(ops1 - ops2);
-        if (opsDiff <= 0.1) {
-          reasons.push(`비슷한 OPS (${ops1.toFixed(3)}, ${ops2.toFixed(3)})`);
+        if (opsDiff <= 0.080) {
+          tags.push('#OPS비슷');
         }
       }
     }
     
-    if (reasons.length === 0) {
-      return '종합적인 벡터 특성이 매우 유사합니다';
+    if (commonLabels.length === 0 && player1.type === 'pitcher' && player2.type === 'pitcher') {
+      if (player1.평균자책점 && player2.평균자책점) {
+        const eraDiff = Math.abs(player1.평균자책점 - player2.평균자책점);
+        if (eraDiff <= 0.40) {
+          tags.push('#ERA비슷');
+        }
+      }
+      
+      if (player1.승 && player2.승) {
+        const winDiff = Math.abs(player1.승 - player2.승);
+        if (winDiff <= 3) {
+          tags.push('#승수비슷');
+        }
+      }
+      
+      if (player1.삼진 && player2.삼진) {
+        const soDiff = Math.abs(player1.삼진 - player2.삼진);
+        if (soDiff <= 20) {
+          tags.push('#삼진비슷');
+        }
+      }
     }
     
-    return reasons.join(', ');
+    if (tags.length === 0) {
+      return '#종합유사';
+    }
+    
+    return tags.join(' ');
   }
   
-  // 마우스 이벤트 핸들러
+  // 해시태그 포맷팅 함수
+  function formatExplanationWithHashtags(explanation: string): string {
+    // #으로 시작해서 다음 #이나 문장 끝까지를 하나의 해시태그로 처리
+    return explanation.replace(/#([^#]+?)(?=\s#|$)/g, '<span class="hashtag">#$1</span>');
+  }
+  
+  // 성능 최적화를 위한 debounce 변수
+  let isRedrawing = false;
+  
+  // 마우스 이벤트 핸들러 (성능 최적화)
   function handleMouseMove(event: MouseEvent) {
     if (!canvas || !ctx) return;
     
@@ -344,12 +466,7 @@
     const prevHoveredIndex = hoveredPlayerIndex;
     hoveredPlayerIndex = closestPlayerIndex;
     
-    // hover 상태가 변경되었으면 다시 그리기
-    if (prevHoveredIndex !== hoveredPlayerIndex) {
-      drawVisualization();
-    }
-    
-    // 툴팁 업데이트
+    // 툴팁 업데이트 (hover 상태 변경과 관계없이)
     if (hoveredPlayerIndex !== null) {
       tooltip = {
         visible: true,
@@ -359,6 +476,15 @@
       };
     } else {
       tooltip = { visible: false, x: 0, y: 0, player: null };
+    }
+    
+    // hover 상태가 변경되었을 때만 다시 그리기 (debounce 적용)
+    if (prevHoveredIndex !== hoveredPlayerIndex && !isRedrawing) {
+      isRedrawing = true;
+      requestAnimationFrame(() => {
+        drawVisualization();
+        isRedrawing = false;
+      });
     }
   }
 
@@ -447,6 +573,31 @@
   <meta name="description" content="KBO 선수들의 벡터 분포와 유사도를 시각화합니다." />
 </svelte:head>
 
+<style>
+  :global(.hashtag) {
+    display: inline-block;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    margin: 0 2px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
+    transition: all 0.2s ease;
+  }
+  
+  :global(.hashtag:hover) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+  }
+  
+  :global(.explanation-text) {
+    line-height: 1.4;
+  }
+</style>
+
 <div class="flex flex-col h-screen bg-gray-50">
   <!-- 헤더 -->
   <header class="flex justify-between items-center px-6 py-4 bg-white border-b border-gray-200 shadow-sm">
@@ -456,13 +607,24 @@
         시각화 도구
       </span>
     </div>
-    <button 
-      on:click={() => showGuideModal = true}
-      class="flex justify-center items-center w-8 h-8 text-sm text-white bg-blue-500 rounded-full transition-colors hover:bg-blue-600"
-      title="시각화 해석 가이드"
-    >
-      ?
-    </button>
+    <div class="flex gap-3 items-center">
+      <a 
+        href="/"
+        class="flex gap-2 items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg transition-colors hover:bg-green-700"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        게임하기
+      </a>
+      <button 
+        on:click={() => showGuideModal = true}
+        class="flex justify-center items-center w-8 h-8 text-sm text-white bg-blue-500 rounded-full transition-colors hover:bg-blue-600"
+        title="시각화 해석 가이드"
+      >
+        ?
+      </button>
+    </div>
   </header>
 
   <!-- 컨텐츠 영역 -->
@@ -521,16 +683,18 @@
 
         <!-- 선택된 선수 정보 -->
         {#if selectedPlayerIndex !== null}
-          <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h3 class="flex items-center mb-3 text-sm font-medium text-blue-900">
-              <svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-              </svg>
-              선택된 선수
-            </h3>
-            <div class="space-y-3">
+          <div class="space-y-4">
+            <!-- 기본 선수 정보 -->
+            <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h3 class="flex items-center mb-3 text-sm font-medium text-blue-900">
+                <svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                선택된 선수
+              </h3>
+              
               <!-- 선수 이미지와 기본 정보 -->
-              <div class="flex items-center space-x-3">
+              <div class="flex items-center mb-4 space-x-3">
                 <div class="flex-shrink-0">
                   {#if allPlayers[selectedPlayerIndex].image_url}
                     <img 
@@ -564,278 +728,48 @@
                 </div>
               </div>
               
-              <!-- 모든 스탯 데이터 표시 -->
-              <div class="mt-3 space-y-4">
-                {#if isBatter(allPlayers[selectedPlayerIndex])}
-                  {@const player = allPlayers[selectedPlayerIndex] as any}
-                  
-                  <!-- 주요 타격 스탯 -->
-                  <div>
-                    <h4 class="mb-2 text-sm font-semibold text-gray-700">주요 타격 스탯</h4>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">타율</div>
-                        <div class="font-medium">{player.타율?.toFixed(3) || 'N/A'}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">출루율</div>
-                        <div class="font-medium">{player.출루율?.toFixed(3) || 'N/A'}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">장타율</div>
-                        <div class="font-medium">{player.장타율?.toFixed(3) || 'N/A'}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">OPS</div>
-                        <div class="font-medium">{((player.출루율 || 0) + (player.장타율 || 0)).toFixed(3)}</div>
-                      </div>
-                    </div>
+              <!-- 주요 스탯만 표시 -->
+              {#if isBatter(allPlayers[selectedPlayerIndex])}
+                {@const player = allPlayers[selectedPlayerIndex] as any}
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <div class="p-2 bg-white rounded">
+                    <div class="text-gray-500">타율</div>
+                    <div class="font-medium">{player.타율?.toFixed(3) || 'N/A'}</div>
                   </div>
-
-                  <!-- 기본 기록 -->
-                  <div>
-                    <h4 class="mb-2 text-sm font-semibold text-gray-700">기본 기록</h4>
-                    <div class="grid grid-cols-3 gap-2 text-xs">
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">경기</div>
-                        <div class="font-medium">{player.경기 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">타석</div>
-                        <div class="font-medium">{player.타석 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">타수</div>
-                        <div class="font-medium">{player.타수 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">득점</div>
-                        <div class="font-medium">{player.득점 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">안타</div>
-                        <div class="font-medium">{player.안타 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">루타</div>
-                        <div class="font-medium">{player.루타 || 0}</div>
-                      </div>
-                    </div>
+                  <div class="p-2 bg-white rounded">
+                    <div class="text-gray-500">홈런</div>
+                    <div class="font-medium">{player.홈런 || 0}</div>
                   </div>
-
-                  <!-- 상세 타격 기록 -->
-                  <div>
-                    <h4 class="mb-2 text-sm font-semibold text-gray-700">상세 타격 기록</h4>
-                    <div class="grid grid-cols-3 gap-2 text-xs">
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">2루타</div>
-                        <div class="font-medium">{player['2루타'] || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">3루타</div>
-                        <div class="font-medium">{player['3루타'] || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">홈런</div>
-                        <div class="font-medium">{player.홈런 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">타점</div>
-                        <div class="font-medium">{player.타점 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">도루</div>
-                        <div class="font-medium">{player.도루 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">도루실패</div>
-                        <div class="font-medium">{player.도루실패 || 0}</div>
-                      </div>
-                    </div>
+                  <div class="p-2 bg-white rounded">
+                    <div class="text-gray-500">타점</div>
+                    <div class="font-medium">{player.타점 || 0}</div>
                   </div>
-
-                  <!-- 기타 기록 -->
-                  <div>
-                    <h4 class="mb-2 text-sm font-semibold text-gray-700">기타 기록</h4>
-                    <div class="grid grid-cols-3 gap-2 text-xs">
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">볼넷</div>
-                        <div class="font-medium">{player.볼넷 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">사구</div>
-                        <div class="font-medium">{player.사구 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">삼진</div>
-                        <div class="font-medium">{player.삼진 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">병살타</div>
-                        <div class="font-medium">{player.병살타 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">실책</div>
-                        <div class="font-medium">{player.실책 || 0}</div>
-                      </div>
-                    </div>
+                  <div class="p-2 bg-white rounded">
+                    <div class="text-gray-500">OPS</div>
+                    <div class="font-medium">{((player.출루율 || 0) + (player.장타율 || 0)).toFixed(3)}</div>
                   </div>
-
-                {:else if isPitcher(allPlayers[selectedPlayerIndex])}
-                  {@const player = allPlayers[selectedPlayerIndex] as any}
-                  
-                  <!-- 주요 투구 스탯 -->
-                  <div>
-                    <h4 class="mb-2 text-sm font-semibold text-gray-700">주요 투구 스탯</h4>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">평균자책점</div>
-                        <div class="font-medium">{player.평균자책점?.toFixed(2) || 'N/A'}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">WHIP</div>
-                        <div class="font-medium">{player.WHIP?.toFixed(2) || 'N/A'}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">피안타율</div>
-                        <div class="font-medium">{player.피안타율?.toFixed(3) || 'N/A'}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">승률</div>
-                        <div class="font-medium">{player.승률?.toFixed(3) || 'N/A'}</div>
-                      </div>
-                    </div>
+                </div>
+              {:else if isPitcher(allPlayers[selectedPlayerIndex])}
+                {@const player = allPlayers[selectedPlayerIndex] as any}
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <div class="p-2 bg-white rounded">
+                    <div class="text-gray-500">평균자책점</div>
+                    <div class="font-medium">{player.평균자책점?.toFixed(2) || 'N/A'}</div>
                   </div>
-
-                  <!-- 승부 기록 -->
-                  <div>
-                    <h4 class="mb-2 text-sm font-semibold text-gray-700">승부 기록</h4>
-                    <div class="grid grid-cols-3 gap-2 text-xs">
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">경기</div>
-                        <div class="font-medium">{player.경기 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">승</div>
-                        <div class="font-medium">{player.승 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">패</div>
-                        <div class="font-medium">{player.패 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">세이브</div>
-                        <div class="font-medium">{player.세이브 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">홀드</div>
-                        <div class="font-medium">{player.홀드 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">블론세이브</div>
-                        <div class="font-medium">{player.블론세이브 || 0}</div>
-                      </div>
-                    </div>
+                  <div class="p-2 bg-white rounded">
+                    <div class="text-gray-500">승</div>
+                    <div class="font-medium">{player.승 || 0}</div>
                   </div>
-
-                  <!-- 투구 내용 -->
-                  <div>
-                    <h4 class="mb-2 text-sm font-semibold text-gray-700">투구 내용</h4>
-                    <div class="grid grid-cols-3 gap-2 text-xs">
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">이닝</div>
-                        <div class="font-medium">{player.이닝?.toFixed(1) || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">타자수</div>
-                        <div class="font-medium">{player.타자수 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">투구수</div>
-                        <div class="font-medium">{player.투구수 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">완투</div>
-                        <div class="font-medium">{player.완투 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">완봉</div>
-                        <div class="font-medium">{player.완봉 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">퀄리티스타트</div>
-                        <div class="font-medium">{player.퀄리티스타트 || 0}</div>
-                      </div>
-                    </div>
+                  <div class="p-2 bg-white rounded">
+                    <div class="text-gray-500">삼진</div>
+                    <div class="font-medium">{player.삼진 || 0}</div>
                   </div>
-
-                  <!-- 피안타 기록 -->
-                  <div>
-                    <h4 class="mb-2 text-sm font-semibold text-gray-700">피안타 기록</h4>
-                    <div class="grid grid-cols-3 gap-2 text-xs">
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">피안타</div>
-                        <div class="font-medium">{player.피안타 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">2루타</div>
-                        <div class="font-medium">{player['2루타'] || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">3루타</div>
-                        <div class="font-medium">{player['3루타'] || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">홈런</div>
-                        <div class="font-medium">{player.홈런 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">실점</div>
-                        <div class="font-medium">{player.실점 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">자책점</div>
-                        <div class="font-medium">{player.자책점 || 0}</div>
-                      </div>
-                    </div>
+                  <div class="p-2 bg-white rounded">
+                    <div class="text-gray-500">WHIP</div>
+                    <div class="font-medium">{player.WHIP?.toFixed(2) || 'N/A'}</div>
                   </div>
-
-                  <!-- 기타 투구 기록 -->
-                  <div>
-                    <h4 class="mb-2 text-sm font-semibold text-gray-700">기타 기록</h4>
-                    <div class="grid grid-cols-3 gap-2 text-xs">
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">볼넷</div>
-                        <div class="font-medium">{player.볼넷 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">고의사구</div>
-                        <div class="font-medium">{player.고의사구 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">삼진</div>
-                        <div class="font-medium">{player.삼진 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">폭투</div>
-                        <div class="font-medium">{player.폭투 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">보크</div>
-                        <div class="font-medium">{player.보크 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">희생번트</div>
-                        <div class="font-medium">{player.희생번트 || 0}</div>
-                      </div>
-                      <div class="p-2 bg-white rounded">
-                        <div class="text-gray-500">희생플라이</div>
-                        <div class="font-medium">{player.희생플라이 || 0}</div>
-                      </div>
-                    </div>
-                  </div>
-                {/if}
-              </div>
+                </div>
+              {/if}
               
               <button 
                 on:click={() => { selectedPlayerIndex = null; drawVisualization(); }}
@@ -843,6 +777,248 @@
               >
                 선택 해제
               </button>
+            </div>
+            
+            <!-- 유사한 선수 TOP 5 -->
+            <div class="bg-white rounded-lg border border-gray-200">
+              <button 
+                on:click={() => showSimilarPlayers = !showSimilarPlayers}
+                class="flex justify-between items-center p-4 w-full text-left transition-colors hover:bg-gray-50"
+              >
+                <h4 class="flex items-center text-sm font-semibold text-gray-900">
+                  <svg class="mr-2 w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                  </svg>
+                  유사한 선수 TOP 5
+                </h4>
+                <svg class="w-4 h-4 text-gray-400 transition-transform {showSimilarPlayers ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              
+              {#if showSimilarPlayers}
+                <div class="px-4 pb-4 space-y-3">
+                  {#each top5SimilarPlayers as { player, similarity, explanation }, index}
+                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                      <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center space-x-2">
+                          <span class="flex justify-center items-center w-6 h-6 text-xs font-bold text-white bg-green-500 rounded-full">{index + 1}</span>
+                          <div>
+                            <div class="text-sm font-semibold text-gray-900">{player.name}</div>
+                            <div class="text-xs text-gray-600">{player.team}</div>
+                          </div>
+                        </div>
+                        <div class="text-right">
+                          <div class="text-sm font-bold text-green-600">{similarity.toFixed(1)}%</div>
+                          <div class="text-xs text-gray-500">유사도</div>
+                        </div>
+                      </div>
+                      <div class="p-2 text-xs text-gray-700 bg-white rounded border">
+                        <span class="explanation-text">{@html formatExplanationWithHashtags(explanation)}</span>
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+            
+            <!-- 상세 스탯 (아코디언) -->
+            <div class="bg-white rounded-lg border border-gray-200">
+              <button 
+                on:click={() => showDetailedStats = !showDetailedStats}
+                class="flex justify-between items-center p-4 w-full text-left transition-colors hover:bg-gray-50"
+              >
+                <h4 class="flex items-center text-sm font-semibold text-gray-900">
+                  <svg class="mr-2 w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                  </svg>
+                  상세 스탯
+                </h4>
+                <svg class="w-4 h-4 text-gray-400 transition-transform {showDetailedStats ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              
+              {#if showDetailedStats}
+                <div class="px-4 pb-4 space-y-4">
+                  {#if isBatter(allPlayers[selectedPlayerIndex])}
+                    {@const player = allPlayers[selectedPlayerIndex] as any}
+                    
+                    <!-- 주요 타격 스탯 -->
+                    <div>
+                      <h5 class="mb-2 text-sm font-semibold text-gray-700">주요 타격 스탯</h5>
+                      <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">타율</div>
+                          <div class="font-medium">{player.타율?.toFixed(3) || 'N/A'}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">출루율</div>
+                          <div class="font-medium">{player.출루율?.toFixed(3) || 'N/A'}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">장타율</div>
+                          <div class="font-medium">{player.장타율?.toFixed(3) || 'N/A'}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">OPS</div>
+                          <div class="font-medium">{((player.출루율 || 0) + (player.장타율 || 0)).toFixed(3)}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 기본 기록 -->
+                    <div>
+                      <h5 class="mb-2 text-sm font-semibold text-gray-700">기본 기록</h5>
+                      <div class="grid grid-cols-3 gap-2 text-xs">
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">경기</div>
+                          <div class="font-medium">{player.경기 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">타석</div>
+                          <div class="font-medium">{player.타석 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">타수</div>
+                          <div class="font-medium">{player.타수 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">득점</div>
+                          <div class="font-medium">{player.득점 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">안타</div>
+                          <div class="font-medium">{player.안타 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">홈런</div>
+                          <div class="font-medium">{player.홈런 || 0}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 상세 타격 기록 -->
+                    <div>
+                      <h5 class="mb-2 text-sm font-semibold text-gray-700">상세 타격 기록</h5>
+                      <div class="grid grid-cols-3 gap-2 text-xs">
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">2루타</div>
+                          <div class="font-medium">{player['2루타'] || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">3루타</div>
+                          <div class="font-medium">{player['3루타'] || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">타점</div>
+                          <div class="font-medium">{player.타점 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">도루</div>
+                          <div class="font-medium">{player.도루 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">볼넷</div>
+                          <div class="font-medium">{player.볼넷 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">삼진</div>
+                          <div class="font-medium">{player.삼진 || 0}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                  {:else if isPitcher(allPlayers[selectedPlayerIndex])}
+                    {@const player = allPlayers[selectedPlayerIndex] as any}
+                    
+                    <!-- 주요 투구 스탯 -->
+                    <div>
+                      <h5 class="mb-2 text-sm font-semibold text-gray-700">주요 투구 스탯</h5>
+                      <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">평균자책점</div>
+                          <div class="font-medium">{player.평균자책점?.toFixed(2) || 'N/A'}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">WHIP</div>
+                          <div class="font-medium">{player.WHIP?.toFixed(2) || 'N/A'}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">피안타율</div>
+                          <div class="font-medium">{player.피안타율?.toFixed(3) || 'N/A'}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">승률</div>
+                          <div class="font-medium">{player.승률?.toFixed(3) || 'N/A'}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 승부 기록 -->
+                    <div>
+                      <h5 class="mb-2 text-sm font-semibold text-gray-700">승부 기록</h5>
+                      <div class="grid grid-cols-3 gap-2 text-xs">
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">경기</div>
+                          <div class="font-medium">{player.경기 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">승</div>
+                          <div class="font-medium">{player.승 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">패</div>
+                          <div class="font-medium">{player.패 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">세이브</div>
+                          <div class="font-medium">{player.세이브 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">이닝</div>
+                          <div class="font-medium">{player.이닝?.toFixed(1) || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">삼진</div>
+                          <div class="font-medium">{player.삼진 || 0}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 피안타 기록 -->
+                    <div>
+                      <h5 class="mb-2 text-sm font-semibold text-gray-700">피안타 기록</h5>
+                      <div class="grid grid-cols-3 gap-2 text-xs">
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">피안타</div>
+                          <div class="font-medium">{player.피안타 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">볼넷</div>
+                          <div class="font-medium">{player.볼넷 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">홈런</div>
+                          <div class="font-medium">{player.홈런 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">실점</div>
+                          <div class="font-medium">{player.실점 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">자책점</div>
+                          <div class="font-medium">{player.자책점 || 0}</div>
+                        </div>
+                        <div class="p-2 bg-gray-50 rounded">
+                          <div class="text-gray-500">완투</div>
+                          <div class="font-medium">{player.완투 || 0}</div>
+                        </div>
+                      </div>
+                    </div>
+                  {/if}
+                </div>
+              {/if}
             </div>
           </div>
         {:else}
@@ -888,46 +1064,16 @@
       <!-- 범례 및 사용법 -->
       <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
         <div class="grid grid-cols-5 gap-3 mb-4 text-sm">
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #FF1744;"></div>
-            <span>KIA</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #2196F3;"></div>
-            <span>삼성</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #E91E63;"></div>
-            <span>LG</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #9C27B0;"></div>
-            <span>두산</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #424242;"></div>
-            <span>KT</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #FF5722;"></div>
-            <span>SSG</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #3F51B5;"></div>
-            <span>롯데</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #FF9800;"></div>
-            <span>한화</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #00BCD4;"></div>
-            <span>NC</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #4CAF50;"></div>
-            <span>키움</span>
-          </div>
+          {#each getTeamColorEntries() as { team, color }}
+            <button 
+              class="flex items-center p-1 rounded transition-colors hover:bg-gray-100 {selectedTeam === team ? 'bg-blue-100 ring-2 ring-blue-300' : ''}"
+              on:click={() => handleTeamFilter(team)}
+              title="클릭하여 {team} 선수들만 표시"
+            >
+              <div class="mr-2 w-3 h-3 rounded-full" style="background-color: {color};"></div>
+              <span class="{selectedTeam === team ? 'font-semibold text-blue-800' : ''}">{team}</span>
+            </button>
+          {/each}
         </div>
         
         <div class="space-y-1 text-xs text-gray-500">

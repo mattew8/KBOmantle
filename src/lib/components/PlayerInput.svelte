@@ -2,6 +2,7 @@
   import { allPlayers } from '../stores/players.js';
   import { currentInput, hasGuessedPlayer, gameMode } from '../stores/game.js';
   import { searchPlayers } from '../stores/players.js';
+  import { getTeamColor } from '../utils/teamColors.js';
   import type { Player } from '../utils/vector.js';
 
   interface Props {
@@ -133,7 +134,7 @@
             >
               <div class="text-sm font-medium text-gray-900">{player.name}</div>
               <div class="flex flex-wrap gap-1 items-center mt-1 text-xs text-gray-600 sm:gap-2">
-                <span class="px-2 py-1 text-xs text-gray-700 bg-gray-100 rounded">{player.team}</span>
+                <span class="px-2 py-1 text-xs text-white rounded font-medium" style="background-color: {getTeamColor(player.team)}">{player.team}</span>
                 <span class="hidden sm:inline">{player.type === 'pitcher' ? '투수' : '타자'}</span>
                 {#if player.type === 'pitcher'}
                   <span class="text-xs sm:text-xs">ERA {player.평균자책점?.toFixed(2) || 'N/A'}</span>
