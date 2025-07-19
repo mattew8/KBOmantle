@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import type { Player } from '$lib/utils/vector';
   import { playerToVector, isBatter, isPitcher } from '$lib/utils/vector';
+  import { calculateVectorSimilarity } from '$lib/utils/similarity';
   import hitters2025 from '$lib/data/hitters-2025.json';
   import hittersTotal from '$lib/data/hitters-total.json';
   import pitchers2025 from '$lib/data/pitchers-2025.json';
@@ -29,7 +30,6 @@
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
   let tooltip = { visible: false, x: 0, y: 0, player: null as PlayerWithMode | null };
-  let lineTooltip = { visible: false, x: 0, y: 0, player1: null as PlayerWithMode | null, player2: null as PlayerWithMode | null, similarity: 0, explanation: '' };
   let canvasContainer: HTMLDivElement;
   let showGuideModal = false;
   let hoveredPlayerIndex: number | null = null; // hover된 선수의 인덱스
@@ -62,19 +62,6 @@
     updatePlayers();
   }
 
-  // 코사인 유사도 계산 (게임과 동일한 방식)
-  function calculateCosineSimilarity(vector1: number[], vector2: number[]): number {
-    if (vector1.length !== vector2.length) return 0;
-
-    const dotProduct = vector1.reduce((sum, a, i) => sum + a * vector2[i], 0);
-    const magnitude1 = Math.sqrt(vector1.reduce((sum, a) => sum + a * a, 0));
-    const magnitude2 = Math.sqrt(vector2.reduce((sum, a) => sum + a * a, 0));
-
-    if (magnitude1 === 0 || magnitude2 === 0) return 0;
-
-    const similarity = dotProduct / (magnitude1 * magnitude2);
-    return Math.max(0, Math.min(100, ((similarity + 1) / 2) * 100));
-  }
 
   // PCA 차원 축소 (벡터를 2D로 변환)
   function reduceToPCA(vectors: number[][]): number[][] {
@@ -160,15 +147,18 @@
     
     // 연결선 그리기 함수
     const drawSimilarityLines = (targetIndex: number, color: string = '34, 197, 94') => {
-      const targetVector = currentVectors[targetIndex];
+      const targetPlayer = allPlayers[targetIndex];
       const [targetX, targetY] = currentNormalizedPoints[targetIndex];
+      
+      // selectedYear를 calculateVectorSimilarity가 예상하는 형식으로 변환
+      const vectorMode = selectedYear === 'total' ? 'career' : '2025';
       
       // 모든 다른 선수들과의 유사도 계산하고 정렬
       const similarities = [];
       for (let i = 0; i < allPlayers.length; i++) {
         if (i === targetIndex) continue; // 자기 자신 제외
         
-        const similarity = calculateCosineSimilarity(targetVector, currentVectors[i]);
+        const similarity = calculateVectorSimilarity(targetPlayer, allPlayers[i], vectorMode);
         similarities.push({
           index: i,
           similarity: similarity,
@@ -318,33 +308,7 @@
     
     return reasons.join(', ');
   }
-
-  // 선에 대한 거리 계산 함수
-  function distanceToLine(x: number, y: number, x1: number, y1: number, x2: number, y2: number): number {
-    const A = x - x1;
-    const B = y - y1;
-    const C = x2 - x1;
-    const D = y2 - y1;
-
-    const dot = A * C + B * D;
-    const lenSq = C * C + D * D;
-    
-    if (lenSq === 0) return Math.sqrt(A * A + B * B);
-    
-    let param = dot / lenSq;
-    
-    if (param < 0) {
-      param = 0;
-    } else if (param > 1) {
-      param = 1;
-    }
-    
-    const xx = x1 + param * C;
-    const yy = y1 + param * D;
-    
-    return Math.sqrt((x - xx) * (x - xx) + (y - yy) * (y - yy));
-  }
-
+  
   // 마우스 이벤트 핸들러
   function handleMouseMove(event: MouseEvent) {
     if (!canvas || !ctx) return;
@@ -396,9 +360,6 @@
     } else {
       tooltip = { visible: false, x: 0, y: 0, player: null };
     }
-    
-    // 선 툴팁은 더 이상 사용하지 않음
-    lineTooltip = { visible: false, x: 0, y: 0, player1: null, player2: null, similarity: 0, explanation: '' };
   }
 
   // 마우스 클릭 이벤트 핸들러
@@ -422,7 +383,7 @@
     let clickedPlayerIndex = null;
     let minDistance = Infinity;
     
-    allPlayers.forEach((player, i) => {
+    allPlayers.forEach((_, i) => {
       const [x, y] = currentNormalizedPoints[i];
       const distance = Math.sqrt((canvasX - x) ** 2 + (canvasY - y) ** 2);
       
@@ -441,7 +402,6 @@
 
   function handleMouseLeave() {
     tooltip = { visible: false, x: 0, y: 0, player: null };
-    lineTooltip = { visible: false, x: 0, y: 0, player1: null, player2: null, similarity: 0, explanation: '' };
     
     // hover 상태 초기화
     if (hoveredPlayerIndex !== null) {
@@ -508,7 +468,7 @@
   <!-- 컨텐츠 영역 -->
   <div class="flex overflow-hidden flex-1">
     <!-- 좌측 사이드바 -->
-    <aside class="w-80 bg-white border-r border-gray-200 shadow-sm overflow-y-auto">
+    <aside class="overflow-y-auto w-80 bg-white border-r border-gray-200 shadow-sm">
       <div class="p-6">
         <h2 class="mb-6 text-lg font-semibold text-gray-900">필터 설정</h2>
         
@@ -605,13 +565,13 @@
               </div>
               
               <!-- 모든 스탯 데이터 표시 -->
-              <div class="space-y-4 mt-3">
+              <div class="mt-3 space-y-4">
                 {#if isBatter(allPlayers[selectedPlayerIndex])}
                   {@const player = allPlayers[selectedPlayerIndex] as any}
                   
                   <!-- 주요 타격 스탯 -->
                   <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">주요 타격 스탯</h4>
+                    <h4 class="mb-2 text-sm font-semibold text-gray-700">주요 타격 스탯</h4>
                     <div class="grid grid-cols-2 gap-2 text-xs">
                       <div class="p-2 bg-white rounded">
                         <div class="text-gray-500">타율</div>
@@ -634,7 +594,7 @@
 
                   <!-- 기본 기록 -->
                   <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">기본 기록</h4>
+                    <h4 class="mb-2 text-sm font-semibold text-gray-700">기본 기록</h4>
                     <div class="grid grid-cols-3 gap-2 text-xs">
                       <div class="p-2 bg-white rounded">
                         <div class="text-gray-500">경기</div>
@@ -665,7 +625,7 @@
 
                   <!-- 상세 타격 기록 -->
                   <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">상세 타격 기록</h4>
+                    <h4 class="mb-2 text-sm font-semibold text-gray-700">상세 타격 기록</h4>
                     <div class="grid grid-cols-3 gap-2 text-xs">
                       <div class="p-2 bg-white rounded">
                         <div class="text-gray-500">2루타</div>
@@ -696,7 +656,7 @@
 
                   <!-- 기타 기록 -->
                   <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">기타 기록</h4>
+                    <h4 class="mb-2 text-sm font-semibold text-gray-700">기타 기록</h4>
                     <div class="grid grid-cols-3 gap-2 text-xs">
                       <div class="p-2 bg-white rounded">
                         <div class="text-gray-500">볼넷</div>
@@ -726,7 +686,7 @@
                   
                   <!-- 주요 투구 스탯 -->
                   <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">주요 투구 스탯</h4>
+                    <h4 class="mb-2 text-sm font-semibold text-gray-700">주요 투구 스탯</h4>
                     <div class="grid grid-cols-2 gap-2 text-xs">
                       <div class="p-2 bg-white rounded">
                         <div class="text-gray-500">평균자책점</div>
@@ -749,7 +709,7 @@
 
                   <!-- 승부 기록 -->
                   <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">승부 기록</h4>
+                    <h4 class="mb-2 text-sm font-semibold text-gray-700">승부 기록</h4>
                     <div class="grid grid-cols-3 gap-2 text-xs">
                       <div class="p-2 bg-white rounded">
                         <div class="text-gray-500">경기</div>
@@ -780,7 +740,7 @@
 
                   <!-- 투구 내용 -->
                   <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">투구 내용</h4>
+                    <h4 class="mb-2 text-sm font-semibold text-gray-700">투구 내용</h4>
                     <div class="grid grid-cols-3 gap-2 text-xs">
                       <div class="p-2 bg-white rounded">
                         <div class="text-gray-500">이닝</div>
@@ -811,7 +771,7 @@
 
                   <!-- 피안타 기록 -->
                   <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">피안타 기록</h4>
+                    <h4 class="mb-2 text-sm font-semibold text-gray-700">피안타 기록</h4>
                     <div class="grid grid-cols-3 gap-2 text-xs">
                       <div class="p-2 bg-white rounded">
                         <div class="text-gray-500">피안타</div>
@@ -842,7 +802,7 @@
 
                   <!-- 기타 투구 기록 -->
                   <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">기타 기록</h4>
+                    <h4 class="mb-2 text-sm font-semibold text-gray-700">기타 기록</h4>
                     <div class="grid grid-cols-3 gap-2 text-xs">
                       <div class="p-2 bg-white rounded">
                         <div class="text-gray-500">볼넷</div>
@@ -1007,9 +967,16 @@
       <div class="space-y-6 text-gray-700">
         <div>
           <h3 class="mb-2 text-lg font-semibold text-blue-600">📍 공간상 위치의 의미</h3>
+          <div class="p-3 mb-3 bg-red-50 rounded-lg border border-red-200">
+            <p class="mb-1 text-sm font-semibold text-red-800">⚠️ 중요한 차이점</p>
+            <p class="text-xs text-red-700">
+              <strong>차트상 거리 ≠ 선수간 유사도</strong><br/>
+              차트는 8차원을 2차원으로 축소한 개략적 분포입니다. 정확한 유사도는 연결선의 %를 확인하세요!
+            </p>
+          </div>
           <ul class="ml-4 space-y-1">
-            <li><strong>가까이 있는 선수들:</strong> 벡터상 유사한 특성을 가진 선수들</li>
-            <li><strong>멀리 있는 선수들:</strong> 완전히 다른 타입의 선수들</li>
+            <li><strong>차트 위치:</strong> 전체적인 데이터 분포와 클러스터 파악용</li>
+            <li><strong>연결선 %:</strong> 실제 게임에서 경험하는 정확한 유사도</li>
             <li><strong>클러스터(군집):</strong> 비슷한 스타일의 선수들이 모여있는 영역</li>
           </ul>
         </div>
@@ -1085,10 +1052,3 @@
     </div>
   </div>
 {/if}
-
-<style>
-  .container {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  }
-</style>
