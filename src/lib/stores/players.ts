@@ -3,7 +3,7 @@ import type { Player, Batter, Pitcher } from "../utils/vector.js";
 import { gameMode, type GameMode } from "./game.js";
 import hitters2025Data from "../data/hitters-2025.json";
 import hittersTotalData from "../data/hitters-total.json";
-import pitchersRecordData from "../data/pitchers-record.json";
+import pitchersRecordData from "../data/pitchers-2025.json";
 import pitchersTotalData from "../data/pitchers-total.json";
 
 // 2025 타자 데이터에 type 필드 추가
