@@ -5,7 +5,7 @@ export interface BasePlayer {
   name: string;
   team: string;
   birth_date: string;
-  image_url: string;
+  image_url: string | null;
 }
 
 export interface Batter extends BasePlayer {
