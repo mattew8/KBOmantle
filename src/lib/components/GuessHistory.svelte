@@ -3,7 +3,7 @@
   import type { Guess } from '../stores/game.js';
   import { onMount } from 'svelte';
 
-  type SortKey = 'input' | 'name' | 'similarity' | 'rank';
+  type SortKey = 'input' | 'name' | 'similarity';
   type SortDirection = 'asc' | 'desc';
 
   let sortKey: SortKey = $state('input');
@@ -17,7 +17,7 @@
       const savedSortKey = localStorage.getItem('kbomantle-sort-key');
       const savedSortDirection = localStorage.getItem('kbomantle-sort-direction');
       
-      if (savedSortKey && ['input', 'name', 'similarity', 'rank'].includes(savedSortKey)) {
+      if (savedSortKey && ['input', 'name', 'similarity'].includes(savedSortKey)) {
         sortKey = savedSortKey as SortKey;
       }
       
@@ -128,7 +128,7 @@
     <!-- 테이블 헤더 -->
     <div class="overflow-hidden bg-white rounded-lg border border-gray-200">
       <div class="bg-gray-50 border-b border-gray-200">
-        <div class="grid grid-cols-12 gap-2 px-2 py-3 text-xs font-medium tracking-wider text-gray-700 uppercase sm:gap-4 sm:px-4">
+        <div class="grid grid-cols-9 gap-2 px-2 py-3 text-xs font-medium tracking-wider text-gray-700 uppercase sm:gap-4 sm:px-4">
           <div class="col-span-1">
             <button 
               onclick={() => handleSort('input')}
@@ -156,15 +156,6 @@
               <span class="hidden text-xs sm:inline">{getSortIcon('similarity')}</span>
             </button>
           </div>
-          <div class="col-span-3">
-            <button 
-              onclick={() => handleSort('rank')}
-              class="flex gap-1 items-center transition-colors hover:text-gray-900"
-            >
-              순위
-              <span class="hidden text-xs sm:inline">{getSortIcon('rank')}</span>
-            </button>
-          </div>
         </div>
       </div>
       
@@ -176,7 +167,7 @@
             class="w-full text-left transition-colors hover:bg-gray-50 {expandedPlayerId === guess.player.id ? 'bg-blue-50' : ''}"
             onclick={() => handleRowClick(guess.player.id)}
           >
-            <div class="grid grid-cols-12 gap-2 px-2 py-3 sm:gap-4 sm:px-4">
+            <div class="grid grid-cols-9 gap-2 px-2 py-3 sm:gap-4 sm:px-4">
               <!-- 입력 순서 -->
               <div class="flex col-span-1 items-center">
                 <span class="text-xs text-gray-500 sm:text-sm">{$guesses.findIndex(g => g.timestamp === guess.timestamp) + 1}</span>
