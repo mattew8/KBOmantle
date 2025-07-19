@@ -108,13 +108,11 @@
     // 캔버스 초기화
     ctx.clearRect(0, 0, width, height);
     
-    // 벡터 계산 (게임과 동일한 함수 사용, 단 팀 가중치 제거를 위해 모든 선수 팀을 통일)
+    // 벡터 계산
     // selectedYear를 playerToVector가 예상하는 형식으로 변환
     const vectorMode = selectedYear === 'total' ? 'career' : '2025';
     currentVectors = allPlayers.map(player => {
-      // 팀 가중치 영향을 없애기 위해 모든 선수의 팀을 임시로 통일
-      const playerWithUnifiedTeam = { ...player, team: '롯데' };
-      return playerToVector(playerWithUnifiedTeam, vectorMode);
+      return playerToVector(player, vectorMode);
     });
     const reducedVectors = reduceToPCA(currentVectors);
     
