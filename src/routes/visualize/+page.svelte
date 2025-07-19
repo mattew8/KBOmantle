@@ -3,6 +3,7 @@
   import type { Player } from '$lib/utils/vector';
   import { playerToVector, isBatter, isPitcher } from '$lib/utils/vector';
   import { calculateVectorSimilarity } from '$lib/utils/similarity';
+  import { TEAM_COLORS, getTeamColor, getTeamColorEntries } from '$lib/utils/teamColors';
   import hitters2025 from '$lib/data/hitters-2025.json';
   import hittersTotal from '$lib/data/hitters-total.json';
   import pitchers2025 from '$lib/data/pitchers-2025.json';
@@ -131,19 +132,7 @@
       padding + ((y - minY) / (maxY - minY)) * (height - 2 * padding)
     ]);
     
-    // 팀별 색상 매핑 (더 구분되는 색상으로 변경)
-    const teamColors: Record<string, string> = {
-      'KIA': '#FF1744',     // 빨강
-      '삼성': '#2196F3',    // 파랑
-      'LG': '#E91E63',      // 핑크
-      '두산': '#9C27B0',    // 보라
-      'KT': '#424242',      // 회색
-      'SSG': '#FF5722',     // 주황빨강
-      '롯데': '#3F51B5',    // 남색
-      '한화': '#FF9800',    // 주황
-      'NC': '#00BCD4',      // 청록
-      '키움': '#4CAF50'     // 초록
-    };
+    // 🎨 공통 팀 색상 사용
     
     // 연결선 그리기 함수
     const drawSimilarityLines = (targetIndex: number, color: string = '34, 197, 94') => {
@@ -210,7 +199,7 @@
     // 선수 포인트 그리기
     allPlayers.forEach((player, i) => {
       const [x, y] = currentNormalizedPoints[i];
-      const color = teamColors[player.team] || '#666666';
+      const color = getTeamColor(player.team);
       const isHovered = i === hoveredPlayerIndex;
       const isSelected = i === selectedPlayerIndex;
       const isSpecial = isHovered || isSelected;
@@ -888,46 +877,12 @@
       <!-- 범례 및 사용법 -->
       <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
         <div class="grid grid-cols-5 gap-3 mb-4 text-sm">
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #FF1744;"></div>
-            <span>KIA</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #2196F3;"></div>
-            <span>삼성</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #E91E63;"></div>
-            <span>LG</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #9C27B0;"></div>
-            <span>두산</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #424242;"></div>
-            <span>KT</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #FF5722;"></div>
-            <span>SSG</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #3F51B5;"></div>
-            <span>롯데</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #FF9800;"></div>
-            <span>한화</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #00BCD4;"></div>
-            <span>NC</span>
-          </div>
-          <div class="flex items-center">
-            <div class="mr-2 w-3 h-3 rounded-full" style="background-color: #4CAF50;"></div>
-            <span>키움</span>
-          </div>
+          {#each getTeamColorEntries() as { team, color }}
+            <div class="flex items-center">
+              <div class="mr-2 w-3 h-3 rounded-full" style="background-color: {color};"></div>
+              <span>{team}</span>
+            </div>
+          {/each}
         </div>
         
         <div class="space-y-1 text-xs text-gray-500">

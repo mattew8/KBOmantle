@@ -2,6 +2,7 @@
   import { targetPlayer, dailyGameState, attemptCount } from '$lib/stores/game.js';
   import { getTimeUntilTomorrow } from '$lib/utils/daily.js';
   import { CONFIG, generateShareText } from '$lib/config.js';
+  import { getTeamColor } from '$lib/utils/teamColors.js';
   import { onMount, onDestroy } from 'svelte';
   
   let timeUntilTomorrow = getTimeUntilTomorrow();
@@ -136,7 +137,11 @@
           </div>
         </div>
         <h2 class="mb-1 text-xl font-semibold text-gray-900">{$targetPlayer.name}</h2>
-        <p class="mb-3 text-gray-600">{$targetPlayer.team}</p>
+        <div class="mb-3">
+          <span class="inline-block px-3 py-1 text-sm font-medium text-white rounded-md" style="background-color: {getTeamColor($targetPlayer.team)}">
+            {$targetPlayer.team}
+          </span>
+        </div>
         
         <!-- <div class="inline-flex space-x-4 text-sm text-gray-600">
           <span class="font-medium">.{$targetPlayer.타율?.toFixed(3).slice(1) || 'N/A'}</span>
