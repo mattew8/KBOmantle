@@ -17,6 +17,7 @@
   let dropdownElement: HTMLDivElement;
   let showDropdown = $state(true);
   let lastInput = $state('');
+  let selectedPlayer = $state<Player | null>(null);
 
   $effect(() => {
     if ($currentInput.length > 0 && showDropdown) {
@@ -39,6 +40,7 @@
     if ($currentInput !== lastInput) {
       showDropdown = true;
       lastInput = $currentInput;
+      selectedPlayer = null; // 입력 값이 변경되면 선택된 선수 초기화
     }
   });
 
@@ -48,20 +50,28 @@
     lastInput = player.name;
     suggestions = [];
     selectedIndex = -1;
+    selectedPlayer = player;
   }
 
   function handleGuess() {
     if (!$currentInput.trim()) return;
     
-    const exactMatch = $allPlayers.find(p =>
-      p.name.toLowerCase() === $currentInput.trim().toLowerCase()
-    );
+    // 드롭다운에서 선택한 선수가 있으면 우선 사용
+    let playerToGuess = selectedPlayer;
     
-    if (exactMatch && !$hasGuessedPlayer(exactMatch.id)) {
-      onguess?.(exactMatch);
+    // 선택된 선수가 없으면 이름으로 검색
+    if (!playerToGuess) {
+      playerToGuess = $allPlayers.find(p =>
+        p.name.toLowerCase() === $currentInput.trim().toLowerCase()
+      ) || null;
+    }
+    
+    if (playerToGuess && !$hasGuessedPlayer(playerToGuess.id)) {
+      onguess?.(playerToGuess);
       currentInput.set('');
       suggestions = [];
       selectedIndex = -1;
+      selectedPlayer = null;
       
       // 추측 후 input에 다시 포커스 (모바일에서는 제외)
       setTimeout(() => {
